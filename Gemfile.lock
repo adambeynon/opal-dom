@@ -1,0 +1,26 @@
+PATH
+  remote: .
+  specs:
+    opal-dom (0.0.1)
+
+PATH
+  remote: ~/Development/opal
+  specs:
+    opal (0.3.19)
+
+PATH
+  remote: ~/Development/opal-spec
+  specs:
+    opal-spec (0.1.6)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  opal!
+  opal-dom!
+  opal-spec!
