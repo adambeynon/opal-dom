@@ -39,8 +39,6 @@ class Element
   end
 
   def <<(content)
-    `console.log("appending: ");`
-    `console.log(content);`
     `this.el.appendChild(content.el)`
   end
 
@@ -208,6 +206,28 @@ class Element
     }
   end
 
+  # Returns a string representing the html content inside this element.
+  #
+  # @example
+  #
+  #   Element('#title').html
+  #   # => "<p>Hello world</p>"
+  #
+  # @return [String]
+  def html
+    `this.el.innerHTML`
+  end
+
+  # Set the inner html of this element to the given string.
+  #
+  # @example
+  #
+  #   e = Element.new
+  #   e.html = "<p>hello</p>"
+  #   # => "<div><p>hello</p></div>"
+  #
+  # @param [String] html the string to set
+  # @return [Element] returns self
   def html=(html)
     %x{
       this.el.innerHTML = html;
