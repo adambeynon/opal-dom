@@ -53,7 +53,7 @@ class Element
 
   def append_to_head
     %x{
-      document.head.appendChild(this.el);
+      document.getElementsByTagName('head')[0].appendChild(this.el);
       return this;
     }
   end
@@ -276,4 +276,60 @@ class Element
       return this;
     }
   end
+
+  ##
+  # start: detect IE innerHTML bugs
+    supports_inner_html = true
+    %x{
+      try {
+        var table = document.createElement('table');
+        table.innerHTML = "<tr><td></td></tr>";
+      } catch (err) {
+        supports_inner_html = false;
+      }
+    }
+
+    unless supports_inner_html
+      def html=(html)
+        `this.el.innerHTML = html;`
+        self
+      end
+    end
+  # end: detect IE innerHTML bugs
+  ##
+
+  def text
+    `text_value(this.el)`
+  end
+
+  def text=(str)
+    self.clear
+    `this.el.appendChild(document.createTextNode(str))`
+    self
+  end
+
+  %x{
+    function text_value(el) {
+      var type = el.nodeType, result = '';
+
+      if (type === 1 || type === 9 || type === 11) {
+        if (typeof(el.textContent) === 'string') {
+          return el.textContent;
+        }
+        else if (typeof(el.innerText) === 'string') {
+          return el.innerText.replace(/\\r/g, '');
+        }
+        else {
+          for (var c = el.firstChild; c; c = c.nextSibling) {
+            result += text_value(c);
+          }
+        }
+      }
+      else if (type === 3 || type === 4) {
+        return el.nodeValue;
+      }
+
+      return result;
+    }
+  }
 end

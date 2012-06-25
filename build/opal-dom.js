@@ -13,7 +13,8 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       
       
       var el = document.createElement('div');
-      el.innerHTML = str;
+      // awkward IE
+      el.innerHTML = "_" + str;
 
       var child = el.firstChild;
 
@@ -66,7 +67,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     // line 1, lib/opal/dom/element.rb, class Element
     function Element() {};
     Element = __klass(__base, __super, "Element", Element);
-    var Element_prototype = Element.prototype, __scope = Element._scope;
+    var supports_inner_html = nil, Element_prototype = Element.prototype, __scope = Element._scope, __a;
 
     // line 5, lib/opal/dom/element.rb, Element.[]
     Element.$aref$ = function(str) {
@@ -113,7 +114,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Element_prototype.$append_to_head = function() {
       
       
-      document.head.appendChild(this.el);
+      document.getElementsByTagName('head')[0].appendChild(this.el);
       return this;
     
     };
@@ -176,19 +177,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 128, lib/opal/dom/element.rb, Element#next
+    // line 137, lib/opal/dom/element.rb, Element#next
     Element_prototype.$next = function() {
       
       return this.$sibling("nextSibling");
     };
 
-    // line 141, lib/opal/dom/element.rb, Element#prev
+    // line 150, lib/opal/dom/element.rb, Element#prev
     Element_prototype.$prev = function() {
       
       return this.$sibling("previousSibling");
     };
 
-    // line 154, lib/opal/dom/element.rb, Element#remove_class
+    // line 163, lib/opal/dom/element.rb, Element#remove_class
     Element_prototype.$remove_class = function(name) {
       
       
@@ -203,7 +204,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 167, lib/opal/dom/element.rb, Element#remove
+    // line 176, lib/opal/dom/element.rb, Element#remove
     Element_prototype.$remove = function() {
       
       
@@ -217,7 +218,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 180, lib/opal/dom/element.rb, Element#sibling
+    // line 189, lib/opal/dom/element.rb, Element#sibling
     Element_prototype.$sibling = function(type) {
       
       
@@ -237,7 +238,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Element_prototype.$succ = Element_prototype.$next;
 
-    // line 198, lib/opal/dom/element.rb, Element#hide
+    // line 207, lib/opal/dom/element.rb, Element#hide
     Element_prototype.$hide = function() {
       
       
@@ -246,7 +247,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 205, lib/opal/dom/element.rb, Element#show
+    // line 214, lib/opal/dom/element.rb, Element#show
     Element_prototype.$show = function() {
       
       
@@ -255,7 +256,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 219, lib/opal/dom/element.rb, Element#clear
+    // line 228, lib/opal/dom/element.rb, Element#clear
     Element_prototype.$clear = function() {
       
       
@@ -269,7 +270,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 231, lib/opal/dom/element.rb, Element#css
+    // line 240, lib/opal/dom/element.rb, Element#css
     Element_prototype.$css = function(name, value) {
       
       
@@ -281,13 +282,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
-    // line 249, lib/opal/dom/element.rb, Element#html
+    // line 258, lib/opal/dom/element.rb, Element#html
     Element_prototype.$html = function() {
       
       return this.el.innerHTML;
     };
 
-    // line 263, lib/opal/dom/element.rb, Element#html=
+    // line 272, lib/opal/dom/element.rb, Element#html=
     Element_prototype.$html$e = function(html) {
       
       
@@ -296,7 +297,66 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     
     };
-    ;Element._donate(["$initialize", "$lshft$", "$append", "$append_to_body", "$append_to_head", "$add_class", "$has_class$p", "$id", "$inspect", "$class_name", "$class_name$e", "$next", "$prev", "$remove_class", "$remove", "$sibling", "$succ", "$hide", "$show", "$clear", "$css", "$html", "$html$e"]);    ;Element._sdonate(["$aref$"]);
+
+    supports_inner_html = true;
+
+    
+      try {
+        var table = document.createElement('table');
+        table.innerHTML = "<tr><td></td></tr>";
+      } catch (err) {
+        supports_inner_html = false;
+      }
+    
+
+    if ((__a = supports_inner_html) === false || __a === nil) {
+      // line 293, lib/opal/dom/element.rb, Element#html=
+      Element_prototype.$html$e = function(html) {
+        
+        this.el.innerHTML = html;
+        return this;
+      }
+    };
+
+    // line 301, lib/opal/dom/element.rb, Element#text
+    Element_prototype.$text = function() {
+      
+      return text_value(this.el);
+    };
+
+    // line 305, lib/opal/dom/element.rb, Element#text=
+    Element_prototype.$text$e = function(str) {
+      
+      this.$clear();
+      this.el.appendChild(document.createTextNode(str));
+      return this;
+    };
+
+    
+    function text_value(el) {
+      var type = el.nodeType, result = '';
+
+      if (type === 1 || type === 9 || type === 11) {
+        if (typeof(el.textContent) === 'string') {
+          return el.textContent;
+        }
+        else if (typeof(el.innerText) === 'string') {
+          return el.innerText.replace(/\r/g, '');
+        }
+        else {
+          for (var c = el.firstChild; c; c = c.nextSibling) {
+            result += text_value(c);
+          }
+        }
+      }
+      else if (type === 3 || type === 4) {
+        return el.nodeValue;
+      }
+
+      return result;
+    }
+  
+    ;Element._donate(["$initialize", "$lshft$", "$append", "$append_to_body", "$append_to_head", "$add_class", "$has_class$p", "$id", "$inspect", "$class_name", "$class_name$e", "$next", "$prev", "$remove_class", "$remove", "$sibling", "$succ", "$hide", "$show", "$clear", "$css", "$html", "$html$e", "$html$e", "$text", "$text$e"]);    ;Element._sdonate(["$aref$"]);
   })(self, null)
 })();
 // file lib/opal/dom/element_set.rb

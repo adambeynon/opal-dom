@@ -2,7 +2,8 @@ class DOM
   def self.parse(str)
     %x{
       var el = document.createElement('div');
-      el.innerHTML = str;
+      // awkward IE
+      el.innerHTML = "_" + str;
 
       var child = el.firstChild;
 
