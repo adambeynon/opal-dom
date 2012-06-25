@@ -58,6 +58,15 @@ class Element
     }
   end
 
+  # Adds the given classname `name` to this element. This method has no
+  # effect if the element already has the given classname.
+  #
+  # @example
+  #
+  #   Element('#foo').add_class 'bar'
+  #
+  # @param [String] name classname to add
+  # @return [Element] returns self
   def add_class(name)
     %x{
       var el = this.el, className = el.className;
@@ -73,10 +82,24 @@ class Element
     }
   end
 
+  # Returns `true` if this element has the given classname in its set
+  # of classes, `false` otherwise.
+  #
+  # @example
+  #
+  #   # <div id="foo" class="apples"></div>
+  #
+  #   Element('#foo').has_class?('apples')    # => true
+  #   Element('#foo').has_class?('oranges')   # => false
+  #
+  # @param [String] name the classname to check for
+  # @return [true, false]
   def has_class?(name)
-    %x{
-      (' ' + this.el.className + ' ').indexOf(' ' + name + ' ') !== -1
-    }
+    `return (' ' + this.el.className + ' ').indexOf(' ' + name + ' ') !== -1`
+  end
+
+  def id
+    `this.el.id`
   end
 
   def inspect
@@ -102,6 +125,15 @@ class Element
     }
   end
 
+  # Returns the next sibling of this element. Text nodes are ignored,
+  # and if there is no next element then `nil` is returned.
+  #
+  # @example
+  #
+  #   elem.next     # => Element instance
+  #   elem.next     # => nil
+  #
+  # @return [Element, nil] next element if it exists
   def next
     sibling :nextSibling
   end
@@ -119,6 +151,15 @@ class Element
     sibling :previousSibling
   end
 
+  # Removes the given classname from this elements' class. There is no
+  # effect if this element does not have the given classname.
+  #
+  # @example
+  #
+  #   Element('#foo').remove_class 'apples'
+  #
+  # @param [String] name classname to remove
+  # @return [Element] returns self
   def remove_class(name)
     %x{
       var el = this.el, className = ' ' + el.className + ' ';
@@ -150,7 +191,7 @@ class Element
       var el = this.el;
 
       while (el = el[type]) {
-        if (el.nodeType !== -1) {
+        if (el.nodeType !== 1) {
           continue;
         }
 

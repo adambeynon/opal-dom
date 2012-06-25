@@ -1,11 +1,14 @@
+// file lib/opal/dom/depreceated.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/depreceated.rb, class DOM
     function DOM() {};
     DOM = __klass(__base, __super, "DOM", DOM);
     var DOM_prototype = DOM.prototype, __scope = DOM._scope;
 
+    // line 2, lib/opal/dom/depreceated.rb, DOM.parse
     DOM.$parse = function(str) {
       
       
@@ -29,19 +32,23 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;DOM._sdonate(["$parse"]);
   })(self, null)
 })();
+// file lib/opal/dom/document.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __module = __opal.module;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __module = __opal.module;
 
   return (function(__base){
+    // line 1, lib/opal/dom/document.rb, module Document
     function Document() {};
     Document = __module(__base, "Document", Document);
     var Document_prototype = Document.prototype, __scope = Document._scope, TMP_1;
 
+    // line 2, lib/opal/dom/document.rb, Document.body_ready?
     Document.$body_ready$p = function() {
       
       return !!(document && document.body);
     };
 
+    // line 6, lib/opal/dom/document.rb, Document.ready?
     Document.$ready$p = TMP_1 = function() {
       var __context, block;
       block = TMP_1._p || nil, __context = block._s, TMP_1._p = null;
@@ -51,19 +58,23 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         ;Document._sdonate(["$body_ready$p", "$ready$p"]);
   })(self)
 })();
+// file lib/opal/dom/element.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass, __alias = __opal.alias;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/element.rb, class Element
     function Element() {};
     Element = __klass(__base, __super, "Element", Element);
     var Element_prototype = Element.prototype, __scope = Element._scope;
 
+    // line 5, lib/opal/dom/element.rb, Element.[]
     Element.$aref$ = function(str) {
       
       return this.$Element(str)
     };
 
+    // line 27, lib/opal/dom/element.rb, Element#initialize
     Element_prototype.$initialize = function(el) {
       if (el == null) {
         el = "div"
@@ -81,15 +92,15 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 41, lib/opal/dom/element.rb, Element#<<
     Element_prototype.$lshft$ = function(content) {
       
-      console.log("appending: ");
-      console.log(content);
       return this.el.appendChild(content.el);
     };
 
     Element_prototype.$append = Element_prototype.$lshft$;
 
+    // line 47, lib/opal/dom/element.rb, Element#append_to_body
     Element_prototype.$append_to_body = function() {
       
       
@@ -98,6 +109,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 54, lib/opal/dom/element.rb, Element#append_to_head
     Element_prototype.$append_to_head = function() {
       
       
@@ -106,6 +118,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 70, lib/opal/dom/element.rb, Element#add_class
     Element_prototype.$add_class = function(name) {
       
       
@@ -122,13 +135,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 97, lib/opal/dom/element.rb, Element#has_class?
     Element_prototype.$has_class$p = function(name) {
       
-      return 
-      (' ' + this.el.className + ' ').indexOf(' ' + name + ' ') !== -1
-    ;
+      return (' ' + this.el.className + ' ').indexOf(' ' + name + ' ') !== -1;
     };
 
+    // line 101, lib/opal/dom/element.rb, Element#id
+    Element_prototype.$id = function() {
+      
+      return this.el.id;
+    };
+
+    // line 105, lib/opal/dom/element.rb, Element#inspect
     Element_prototype.$inspect = function() {
       
       
@@ -141,6 +160,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 116, lib/opal/dom/element.rb, Element#class_name
     Element_prototype.$class_name = function() {
       
       
@@ -148,6 +168,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 122, lib/opal/dom/element.rb, Element#class_name=
     Element_prototype.$class_name$e = function(name) {
       
       
@@ -155,16 +176,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 128, lib/opal/dom/element.rb, Element#next
     Element_prototype.$next = function() {
       
       return this.$sibling("nextSibling");
     };
 
+    // line 141, lib/opal/dom/element.rb, Element#prev
     Element_prototype.$prev = function() {
       
       return this.$sibling("previousSibling");
     };
 
+    // line 154, lib/opal/dom/element.rb, Element#remove_class
     Element_prototype.$remove_class = function(name) {
       
       
@@ -179,6 +203,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 167, lib/opal/dom/element.rb, Element#remove
     Element_prototype.$remove = function() {
       
       
@@ -192,13 +217,14 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 180, lib/opal/dom/element.rb, Element#sibling
     Element_prototype.$sibling = function(type) {
       
       
       var el = this.el;
 
       while (el = el[type]) {
-        if (el.nodeType !== -1) {
+        if (el.nodeType !== 1) {
           continue;
         }
 
@@ -211,6 +237,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Element_prototype.$succ = Element_prototype.$next;
 
+    // line 198, lib/opal/dom/element.rb, Element#hide
     Element_prototype.$hide = function() {
       
       
@@ -219,6 +246,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 205, lib/opal/dom/element.rb, Element#show
     Element_prototype.$show = function() {
       
       
@@ -227,6 +255,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 219, lib/opal/dom/element.rb, Element#clear
     Element_prototype.$clear = function() {
       
       
@@ -240,6 +269,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 231, lib/opal/dom/element.rb, Element#css
     Element_prototype.$css = function(name, value) {
       
       
@@ -251,6 +281,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 249, lib/opal/dom/element.rb, Element#html
+    Element_prototype.$html = function() {
+      
+      return this.el.innerHTML;
+    };
+
+    // line 263, lib/opal/dom/element.rb, Element#html=
     Element_prototype.$html$e = function(html) {
       
       
@@ -259,22 +296,26 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     
     };
-    ;Element._donate(["$initialize", "$lshft$", "$append", "$append", "$append_to_body", "$append_to_head", "$add_class", "$has_class$p", "$inspect", "$class_name", "$class_name$e", "$next", "$prev", "$remove_class", "$remove", "$sibling", "$succ", "$succ", "$hide", "$show", "$clear", "$css", "$html$e"]);    ;Element._sdonate(["$aref$"]);
+    ;Element._donate(["$initialize", "$lshft$", "$append", "$append_to_body", "$append_to_head", "$add_class", "$has_class$p", "$id", "$inspect", "$class_name", "$class_name$e", "$next", "$prev", "$remove_class", "$remove", "$sibling", "$succ", "$hide", "$show", "$clear", "$css", "$html", "$html$e"]);    ;Element._sdonate(["$aref$"]);
   })(self, null)
 })();
+// file lib/opal/dom/element_set.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass, __alias = __opal.alias;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 11, lib/opal/dom/element_set.rb, class ElementSet
     function ElementSet() {};
     ElementSet = __klass(__base, __super, "ElementSet", ElementSet);
     var ElementSet_prototype = ElementSet.prototype, __scope = ElementSet._scope, TMP_1;
 
+    // line 19, lib/opal/dom/element_set.rb, ElementSet#initialize
     ElementSet_prototype.$initialize = function(selector, context) {
       
       return this.length = 0;
     };
 
+    // line 24, lib/opal/dom/element_set.rb, ElementSet#each
     ElementSet_prototype.$each = TMP_1 = function() {
       var __context, block;
       block = TMP_1._p || nil, __context = block._s, TMP_1._p = null;
@@ -285,24 +326,28 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 32, lib/opal/dom/element_set.rb, ElementSet#length
     ElementSet_prototype.$length = function() {
       
       return this.length;
     };
 
     ElementSet_prototype.$size = ElementSet_prototype.$length;
-    ;ElementSet._donate(["$initialize", "$each", "$length", "$size", "$size"]);
+    ;ElementSet._donate(["$initialize", "$each", "$length", "$size"]);
   })(self, null)
 })();
+// file lib/opal/dom/event.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/event.rb, class Event
     function Event() {};
     Event = __klass(__base, __super, "Event", Event);
     var Event_prototype = Event.prototype, __scope = Event._scope;
     Event_prototype.alt = Event_prototype.ctrl = Event_prototype.meta = Event_prototype.shift = nil;
 
+    // line 2, lib/opal/dom/event.rb, Event#initialize
     Event_prototype.$initialize = function(evt) {
       
       
@@ -315,27 +360,32 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 13, lib/opal/dom/event.rb, Event#alt?
     Event_prototype.$alt$p = function() {
       
       return this.alt;
     };
 
+    // line 17, lib/opal/dom/event.rb, Event#ctrl?
     Event_prototype.$ctrl$p = function() {
       
       return this.ctrl;
     };
 
+    // line 21, lib/opal/dom/event.rb, Event#meta?
     Event_prototype.$meta$p = function() {
       
       return this.meta;
     };
 
+    // line 35, lib/opal/dom/event.rb, Event#stop
     Event_prototype.$stop = function() {
       
       this.$prevent_default();
       return this.$stop_propagation();
     };
 
+    // line 40, lib/opal/dom/event.rb, Event#prevent_default
     Event_prototype.$prevent_default = function() {
       
       
@@ -352,11 +402,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 55, lib/opal/dom/event.rb, Event#shift?
     Event_prototype.$shift$p = function() {
       
       return this.shift;
     };
 
+    // line 59, lib/opal/dom/event.rb, Event#stop_propagation
     Event_prototype.$stop_propagation = function() {
       
       
@@ -375,10 +427,12 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;Event._donate(["$initialize", "$alt$p", "$ctrl$p", "$meta$p", "$stop", "$prevent_default", "$shift$p", "$stop_propagation"]);
   })(self, null)
 })();
+// file lib/opal/dom/events.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/events.rb, class Element
     function Element() {};
     Element = __klass(__base, __super, "Element", Element);
     var Element_prototype = Element.prototype, __scope = Element._scope, __a, __b, TMP_2, TMP_3;
@@ -400,6 +454,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       }, __a._s = this, __a), __b.$define_method(evt))
     }, __a._s = Element, __a), __b.$each());
 
+    // line 49, lib/opal/dom/events.rb, Element#add_listener
     Element_prototype.$add_listener = TMP_2 = function(type) {
       var __context, handler;
       handler = TMP_2._p || nil, __context = handler._s, TMP_2._p = null;
@@ -424,6 +479,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 70, lib/opal/dom/events.rb, Element#remove_listener
     Element_prototype.$remove_listener = TMP_3 = function(type) {
       var __context, handler;
       handler = TMP_3._p || nil, __context = handler._s, TMP_3._p = null;
@@ -433,10 +489,12 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;Element._donate(["$add_listener", "$remove_listener"]);
   })(self, null)
 })();
+// file lib/opal/dom/http.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/http.rb, class HTTP
     function HTTP() {};
     HTTP = __klass(__base, __super, "HTTP", HTTP);
     var HTTP_prototype = HTTP.prototype, __scope = HTTP._scope;
@@ -461,6 +519,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     }
   
 
+    // line 22, lib/opal/dom/http.rb, HTTP#initialize
     HTTP_prototype.$initialize = function() {
       
       
@@ -468,6 +527,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 28, lib/opal/dom/http.rb, HTTP#ok?
     HTTP_prototype.$ok$p = function() {
       
       return this.status >= 200 && this.status < 300;
@@ -475,14 +535,17 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;HTTP._donate(["$initialize", "$ok$p"]);
   })(self, null)
 })();
+// file lib/opal/dom/kernel.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __module = __opal.module;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __module = __opal.module;
 
   return (function(__base){
+    // line 1, lib/opal/dom/kernel.rb, module Kernel
     function Kernel() {};
     Kernel = __module(__base, "Kernel", Kernel);
     var Kernel_prototype = Kernel.prototype, __scope = Kernel._scope;
 
+    // line 13, lib/opal/dom/kernel.rb, Kernel#Element
     Kernel_prototype.$Element = function(selector) {
       
       
@@ -506,6 +569,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 43, lib/opal/dom/kernel.rb, Kernel#alert
     Kernel_prototype.$alert = function(msg) {
       
       alert(msg);
@@ -514,10 +578,12 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         ;Kernel._donate(["$Element", "$alert"]);
   })(self)
 })();
+// file lib/opal/dom/version.rb
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __donate = __opal.donate, __klass = __opal.klass;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __klass = __opal.klass;
 
   return (function(__base, __super){
+    // line 1, lib/opal/dom/version.rb, class DOM
     function DOM() {};
     DOM = __klass(__base, __super, "DOM", DOM);
     var DOM_prototype = DOM.prototype, __scope = DOM._scope;

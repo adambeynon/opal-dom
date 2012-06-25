@@ -1,26 +1,40 @@
-// Opal v0.3.19
+// Opal v0.3.20
 // http://opalrb.org
 // Copyright 2012, Adam Beynon
 // Released under the MIT License
 (function(undefined) {
-// The Opal object gets exposed globally (on window) and contains the
-// useful runtime methods available to all ruby files, as well as all
-// the top level ruby classes, modules and constants.
+// The Opal object that is exposed globally
 var Opal = this.Opal = {};
 
-// TopScope is a constructor to hold the prototype that all top level
-// Opal constants are defined on.
+// Very root class
+function BasicObject(){}
+
+// Core Object class
+function Object(){}
+
+// Class' class
+function Class(){}
+
+// Modules are just classes that cannot be instantiated
+var Module = Class;
+
+// the class of nil
+function NilClass(){}
+
+// TopScope is used for inheriting constants from the top scope
 var TopScope = function(){};
 
-// To make things simple, we alias the top scope prototype to the
-// global Opal object.
+// Opal just acts as the top scope
 TopScope.prototype = Opal;
 
+// To inherit scopes
 Opal.alloc  = TopScope;
+
+// This is a useful reference to global object inside ruby files
 Opal.global = this;
 
 // Minify common function calls
-var __hasOwn = Object.prototype.hasOwnProperty;
+var __hasOwn = Opal.hasOwnProperty;
 var __slice  = Opal.slice = Array.prototype.slice;
 
 // Generates unique id for every ruby object
@@ -71,7 +85,7 @@ Opal.klass = function(base, superklass, id, constructor) {
   }
 
   if (superklass === null) {
-    superklass = _Object;
+    superklass = Object;
   }
 
   if (__hasOwn.call(base._scope, id)) {
@@ -80,18 +94,14 @@ Opal.klass = function(base, superklass, id, constructor) {
   else {
     if (!superklass._methods) {
       var bridged = superklass;
-      superklass = _Object;
-      // console.log("bridge native: " + id);
-      // constructor = function() {};
-      klass = bridge_class(bridged);
+      superklass  = Object;
+      klass       = bridge_class(bridged);
     }
     else {
       klass = boot_class(superklass, constructor);
     }
 
-    klass._name = (base === _Object ? id : base._name + '::' + id);
-
-    // make_metaclass(klass, superklass._klass);
+    klass._name = (base === Object ? id : base._name + '::' + id);
 
     var const_alloc   = function() {};
     var const_scope   = const_alloc.prototype = new base._scope.alloc();
@@ -108,11 +118,7 @@ Opal.klass = function(base, superklass, id, constructor) {
   return klass;
 };
 
-Opal.sklass = function(shift, body) {
-  var klass = shift.$singleton_class();
-  return body.call(klass);
-}
-
+// Define new module (or return existing module)
 Opal.module = function(base, id, constructor) {
   var klass;
   if (base._isObject) {
@@ -124,9 +130,7 @@ Opal.module = function(base, id, constructor) {
   }
   else {
     klass = boot_module(constructor, id);
-    klass._name = (base === _Object ? id : base._name + '::' + id);
-
-    // make_metaclass(klass, RubyModule);
+    klass._name = (base === Object ? id : base._name + '::' + id);
 
     klass._isModule = true;
     klass.$included_in = [];
@@ -142,11 +146,13 @@ Opal.module = function(base, id, constructor) {
   return klass;
 }
 
+// Convert a ruby method name into a javascript identifier
 var mid_to_jsid = function(mid) {
   return method_names[mid] ||
     ('$' + mid.replace('!', '$b').replace('?', '$p').replace('=', '$e'));
 };
 
+// Utility function to raise a "no block given" error
 var no_block_given = function() {
   throw new Error('no block given');
 };
@@ -207,22 +213,19 @@ var boot_class = function(superklass, constructor) {
   constructor._super        = superklass;
   constructor._methods      = [];
   constructor._isObject     = false;
-  constructor._klass        = _Class;
-  constructor._real         = _Class;
+  constructor._klass        = Class;
+  constructor._real         = Class;
   constructor._donate       = __donate
   constructor._sdonate      = __sdonate;
   constructor._subclasses   = [];
+
+  constructor.$eqq$ = module_eqq;
 
   superklass._subclasses.push(constructor);
 
   var smethods;
 
-  if (superklass === _Object) {
-    smethods     = _Module._methods.slice();
-  }
-  else {
-    smethods = superklass._smethods.slice();
-  }
+  smethods = superklass._smethods.slice();
 
   constructor._smethods = smethods;
   for (var i = 0, length = smethods.length; i < length; i++) {
@@ -237,7 +240,7 @@ var boot_class = function(superklass, constructor) {
 
 var boot_module = function(constructor, id) {
   var ctor = function() {};
-      ctor.prototype = _Module.prototype;
+      ctor.prototype = Module.prototype;
 
   constructor.prototype = new ctor();
   var prototype = constructor.prototype;
@@ -248,16 +251,16 @@ var boot_module = function(constructor, id) {
   constructor._name     = id;
   constructor._methods  = [];
   constructor._smethods = [];
-  constructor._klass    = _Module;
+  constructor._klass    = Module;
   constructor._donate   = __donate;
   constructor._sdonate  = function(){};
 
   classes.push(constructor);
 
-  var smethods = constructor._smethods = _Module._methods.slice();
+  var smethods = constructor._smethods = Module._methods.slice();
   for (var i = 0, length = smethods.length; i < length; i++) {
     var m = smethods[i];
-    constructor[m] = _Object[m];
+    constructor[m] = Object[m];
   }
 
   return constructor;
@@ -269,8 +272,8 @@ var bridge_class = function(constructor) {
 
   constructor._included_in  = [];
   constructor._isClass      = true;
-  constructor._super        = _Object;
-  constructor._klass        = _Class;
+  constructor._super        = Object;
+  constructor._klass        = Class;
   constructor._methods      = [];
   constructor._smethods     = [];
   constructor._isObject     = false;
@@ -279,13 +282,15 @@ var bridge_class = function(constructor) {
   constructor._donate = function(){};
   constructor._sdonate = __sdonate;
 
-  var smethods = constructor._smethods = _Module._methods.slice();
+  constructor.$eqq$ = module_eqq;
+
+  var smethods = constructor._smethods = Module._methods.slice();
   for (var i = 0, length = smethods.length; i < length; i++) {
     var m = smethods[i];
-    constructor[m] = _Object[m];
+    constructor[m] = Object[m];
   }
 
-  bridged_classes.push(constructor);
+  bridgedClasses.push(constructor);
   classes.push(constructor);
 
   var allocator = function(initializer) {
@@ -313,14 +318,10 @@ var bridge_class = function(constructor) {
     return result;
   };
 
-  var table = _Object.prototype, methods = _Object._methods;
-
-  // console.log("methods:");
-  // console.log(methods);
+  var table = Object.prototype, methods = Object._methods;
 
   for (var i = 0, length = methods.length; i < length; i++) {
     var m = methods[i];
-    // console.log("copying " + m);
     constructor.prototype[m] = table[m];
   }
 
@@ -360,40 +361,36 @@ var define_iclass = function(klass, module) {
 // Initialization
 // --------------
 
-function _BasicObject() {}
-function _Object() {}
-function _Class() {}
-var _Module = _Class;
+boot_defclass('BasicObject', BasicObject);
+boot_defclass('Object', Object, BasicObject);
+boot_defclass('Class', Class, Object);
 
-boot_defclass('BasicObject', _BasicObject);
-boot_defclass('Object', _Object, _BasicObject);
-boot_defclass('Class', _Class, _Object);
+Class.prototype = Function.prototype;
 
-_BasicObject._klass = _Object._klass = _Class._klass = _Class;
+BasicObject._klass = Object._klass = Class._klass = Class;
 
-// Module needs to donate methods to all classes
-// 
-// @param [Array<String>] defined array of methods just defined
-_Module._donate = function(defined) {
-  var methods = this._methods;
-
-  this._methods = methods.concat(defined);
-
-  _Object._smethods = _Object._smethods.concat(defined);
-
-  for (var i = 0, len = defined.length; i < len; i++) {
-    var m = defined[i];
-
-    for (var j = 0, len2 = classes.length; j < len2; j++) {
-      var cls = classes[j];
-
-      // don't overwrite a pre-existing method
-      if (!cls[m]) {
-        cls[m] = this.prototype[m];
-      }
-    }
-  }
+Module._donate = function(defined) {
+  // ...
 };
+
+// Implementation of Module#===
+function module_eqq(object) {
+  if (object == null) {
+    return false;
+  }
+
+  var search = object._klass;
+
+  while (search) {
+    if (search === this) {
+      return true;
+    }
+
+    search = search._super;
+  }
+
+  return false;
+}
 
 // Donator for all 'normal' classes and modules
 function __donate(defined, indirect) {
@@ -435,34 +432,33 @@ function __sdonate(defined) {
   }
 }
 
-var bridged_classes = _Object.$included_in = [];
-_BasicObject.$included_in = bridged_classes;
+var bridgedClasses = Object.$included_in = [];
+BasicObject.$included_in = bridgedClasses;
 
-_BasicObject._scope = _Object._scope = Opal;
+BasicObject._scope = Object._scope = Opal;
 Opal.Module = Opal.Class;
-Opal.Kernel = _Object;
+Opal.Kernel = Object;
 
 var class_const_alloc = function(){};
 var class_const_scope = new TopScope();
 class_const_scope.alloc = class_const_alloc;
-_Class._scope = class_const_scope;
+Class._scope = class_const_scope;
 
-_Object.prototype.toString = function() {
+Object.prototype.toString = function() {
   return this.$to_s();
 };
 
-Opal.top = new _Object;
+Opal.top = new Object;
 
-function _NilClass() {}
-Opal.klass(_Object, _Object, 'NilClass', _NilClass)
-Opal.nil = new _NilClass;
+Opal.klass(Object, Object, 'NilClass', NilClass)
+Opal.nil = new NilClass;
 Opal.nil.call = Opal.nil.apply = no_block_given;
 
 Opal.breaker  = new Error('unexpected break');
 var method_names = {'==': '$eq$', '===': '$eqq$', '[]': '$aref$', '[]=': '$aset$', '~': '$tild$', '<=>': '$cmp$', '=~': '$match$', '+': '$plus$', '-': '$minus$', '/': '$div$', '*': '$mul$', '<': '$lt$', '<=': '$le$', '>': '$gt$', '>=': '$ge$', '<<': '$lshft$', '>>': '$rshft$', '|': '$or$', '&': '$and$', '^': '$xor$', '+@': '$uplus$', '-@': '$uminus$', '%': '$mod$', '**': '$pow$'};
-Opal.version = "0.3.19";
+Opal.version = "0.3.20";
 (function() {
-var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __gvars = __opal.gvars, __donate = __opal.donate, __klass = __opal.klass, __alias = __opal.alias, __module = __opal.module, __hash = __opal.hash;
+var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __breaker = __opal.breaker, __slice = __opal.slice, __gvars = __opal.gvars, __klass = __opal.klass, __module = __opal.module, __hash = __opal.hash;
 
   __gvars["~"] = nil;
   __gvars["/"] = "\n";
@@ -471,37 +467,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
   __scope.RUBY_VERSION = "1.9.2";
   __scope.OPAL_VERSION = __opal.version;
   (function(__base, __super){
+    // line 11, (corelib), class Module
     function Module() {};
     Module = __klass(__base, __super, "Module", Module);
     var Module_prototype = Module.prototype, __scope = Module._scope, TMP_1, TMP_2;
 
-    Module_prototype.$eqq$ = function(object) {
-      
-      
-      if (object == null) {
-        return false;
-      }
-
-      var search = object._klass;
-
-      while (search) {
-        if (search === this) {
-          return true;
-        }
-
-        search = search._super;
-      }
-
-      return false;
-    
-    };
-
+    // line 12, (corelib), Module#alias_method
     Module_prototype.$alias_method = function(newname, oldname) {
       
       this.prototype[mid_to_jsid(newname)] = this.prototype[mid_to_jsid(oldname)];
       return this;
     };
 
+    // line 17, (corelib), Module#ancestors
     Module_prototype.$ancestors = function() {
       
       
@@ -525,6 +503,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 39, (corelib), Module#append_features
     Module_prototype.$append_features = function(klass) {
       
       
@@ -552,16 +531,12 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
           prototype = klass.prototype,
           methods   = module._methods;
 
-      //console.log("need to donate:");
-      //console.log(methods);
-
       for (var i = 0, length = methods.length; i < length; i++) {
         var method = methods[i];
         prototype[method] = donator[method];
       }
 
       if (klass.$included_in) {
-        // __donate(klass, methods.slice(), true);
         klass._donate(methods.slice(), true);
       }
     
@@ -593,6 +568,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     }
   
 
+    // line 104, (corelib), Module#attr_accessor
     Module_prototype.$attr_accessor = function(attrs) {
       attrs = __slice.call(arguments, 0);
       
@@ -604,6 +580,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 114, (corelib), Module#attr_reader
     Module_prototype.$attr_reader = function(attrs) {
       attrs = __slice.call(arguments, 0);
       
@@ -615,6 +592,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 124, (corelib), Module#attr_writer
     Module_prototype.$attr_writer = function(attrs) {
       attrs = __slice.call(arguments, 0);
       
@@ -626,6 +604,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 134, (corelib), Module#attr
     Module_prototype.$attr = function(name, setter) {
       if (setter == null) {
         setter = false
@@ -634,6 +613,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 140, (corelib), Module#define_method
     Module_prototype.$define_method = TMP_1 = function(name) {
       var __context, block;
       block = TMP_1._p || nil, __context = block._s, TMP_1._p = null;
@@ -648,13 +628,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       block._sup = this.prototype[jsid];
 
       this.prototype[jsid] = block;
-      //__donate(this, [jsid]);
       this._donate([jsid]);
 
       return nil;
     
     };
 
+    // line 157, (corelib), Module#include
     Module_prototype.$include = function(mods) {
       mods = __slice.call(arguments, 0);
       
@@ -675,16 +655,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 177, (corelib), Module#instance_methods
     Module_prototype.$instance_methods = function() {
       
       return [];
     };
 
+    // line 181, (corelib), Module#included
     Module_prototype.$included = function(mod) {
       
       return nil;
     };
 
+    // line 184, (corelib), Module#module_eval
     Module_prototype.$module_eval = TMP_2 = function() {
       var __context, block;
       block = TMP_2._p || nil, __context = block._s, TMP_2._p = null;
@@ -700,6 +683,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Module_prototype.$class_eval = Module_prototype.$module_eval;
 
+    // line 196, (corelib), Module#name
     Module_prototype.$name = function() {
       
       return this._name;
@@ -707,6 +691,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Module_prototype.$public_instance_methods = Module_prototype.$instance_methods;
 
+    // line 202, (corelib), Module#singleton_class
     Module_prototype.$singleton_class = function() {
       
       
@@ -725,13 +710,15 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     };
 
     Module_prototype.$to_s = Module_prototype.$name;
-    ;Module._donate(["$eqq$", "$alias_method", "$ancestors", "$append_features", "$attr_accessor", "$attr_reader", "$attr_writer", "$attr", "$define_method", "$include", "$instance_methods", "$included", "$module_eval", "$class_eval", "$class_eval", "$name", "$public_instance_methods", "$public_instance_methods", "$singleton_class", "$to_s", "$to_s"]);
+    ;Module._donate(["$alias_method", "$ancestors", "$append_features", "$attr_accessor", "$attr_reader", "$attr_writer", "$attr", "$define_method", "$include", "$instance_methods", "$included", "$module_eval", "$class_eval", "$name", "$public_instance_methods", "$singleton_class", "$to_s"]);
   })(self, null);
   (function(__base, __super){
+    // line 220, (corelib), class Class
     function Class() {};
     Class = __klass(__base, __super, "Class", Class);
     var Class_prototype = Class.prototype, __scope = Class._scope, TMP_3, TMP_4;
 
+    // line 221, (corelib), Class.new
     Class.$new = TMP_3 = function(sup) {
       var __context, block;
       block = TMP_3._p || nil, __context = block._s, TMP_3._p = null;
@@ -739,13 +726,9 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         sup = __scope.Object
       }
       
-      function __Class(){};
-      var klass   = boot_class(sup, __Class)
+      function AnonClass(){};
+      var klass   = boot_class(sup, AnonClass)
       klass._name = nil;
-      //var klass        = boot_class(sup);
-      //    klass._name = nil;
-
-      //make_metaclass(klass, sup._klass);
 
       sup.$inherited(klass);
 
@@ -757,6 +740,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 237, (corelib), Class#allocate
     Class_prototype.$allocate = function() {
       
       
@@ -766,6 +750,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 245, (corelib), Class#new
     Class_prototype.$new = TMP_4 = function(args) {
       var __context, block;
       block = TMP_4._p || nil, __context = block._s, TMP_4._p = null;
@@ -778,11 +763,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 254, (corelib), Class#inherited
     Class_prototype.$inherited = function(cls) {
       
       return nil;
     };
 
+    // line 257, (corelib), Class#superclass
     Class_prototype.$superclass = function() {
       
       
@@ -806,20 +793,24 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;Class._donate(["$allocate", "$new", "$inherited", "$superclass"]);    ;Class._sdonate(["$new"]);
   })(self, null);
   (function(__base, __super){
+    // line 277, (corelib), class BasicObject
     function BasicObject() {};
     BasicObject = __klass(__base, __super, "BasicObject", BasicObject);
     var BasicObject_prototype = BasicObject.prototype, __scope = BasicObject._scope, TMP_5, TMP_6, TMP_7;
 
+    // line 278, (corelib), BasicObject#initialize
     BasicObject_prototype.$initialize = function() {
       
       return nil;
     };
 
+    // line 281, (corelib), BasicObject#==
     BasicObject_prototype.$eq$ = function(other) {
       
       return this === other;
     };
 
+    // line 285, (corelib), BasicObject#__send__
     BasicObject_prototype.$__send__ = TMP_5 = function(symbol, args) {
       var __context, block;
       block = TMP_5._p || nil, __context = block._s, TMP_5._p = null;
@@ -837,6 +828,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     BasicObject_prototype.$equal$p = BasicObject_prototype.$eq$;
 
+    // line 298, (corelib), BasicObject#instance_eval
     BasicObject_prototype.$instance_eval = TMP_6 = function(string) {
       var __context, block;
       block = TMP_6._p || nil, __context = block._s, TMP_6._p = null;
@@ -850,6 +842,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 308, (corelib), BasicObject#instance_exec
     BasicObject_prototype.$instance_exec = TMP_7 = function(args) {
       var __context, block;
       block = TMP_7._p || nil, __context = block._s, TMP_7._p = null;
@@ -863,32 +856,38 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 318, (corelib), BasicObject#method_missing
     BasicObject_prototype.$method_missing = function(symbol, args) {
       args = __slice.call(arguments, 1);
       return this.$raise(__scope.NoMethodError, "undefined method `" + symbol + "` for " + this.$inspect());
     };
-    ;BasicObject._donate(["$initialize", "$eq$", "$__send__", "$send", "$send", "$eql$p", "$eql$p", "$equal$p", "$equal$p", "$instance_eval", "$instance_exec", "$method_missing"]);
+    ;BasicObject._donate(["$initialize", "$eq$", "$__send__", "$send", "$eql$p", "$equal$p", "$instance_eval", "$instance_exec", "$method_missing"]);
   })(self, null);
   (function(__base){
+    // line 322, (corelib), module Kernel
     function Kernel() {};
     Kernel = __module(__base, "Kernel", Kernel);
     var Kernel_prototype = Kernel.prototype, __scope = Kernel._scope, TMP_8, TMP_9, TMP_10, TMP_11, TMP_12;
 
+    // line 323, (corelib), Kernel#=~
     Kernel_prototype.$match$ = function(obj) {
       
       return false;
     };
 
+    // line 327, (corelib), Kernel#==
     Kernel_prototype.$eq$ = function(other) {
       
       return this === other;
     };
 
+    // line 331, (corelib), Kernel#===
     Kernel_prototype.$eqq$ = function(other) {
       
       return this == other;
     };
 
+    // line 335, (corelib), Kernel#Array
     Kernel_prototype.$Array = function(object) {
       var __a;
       if ((__a = object) === false || __a === nil) {
@@ -913,11 +912,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 357, (corelib), Kernel#class
     Kernel_prototype.$class = function() {
       
       return this._real;
     };
 
+    // line 361, (corelib), Kernel#define_singleton_method
     Kernel_prototype.$define_singleton_method = TMP_8 = function(name) {
       var __context, body;
       body = TMP_8._p || nil, __context = body._s, TMP_8._p = null;
@@ -938,11 +939,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 378, (corelib), Kernel#equal?
     Kernel_prototype.$equal$p = function(other) {
       
       return this === other;
     };
 
+    // line 382, (corelib), Kernel#extend
     Kernel_prototype.$extend = function(mods) {
       mods = __slice.call(arguments, 0);
       
@@ -954,26 +957,31 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 392, (corelib), Kernel#hash
     Kernel_prototype.$hash = function() {
       
       return this._id;
     };
 
+    // line 396, (corelib), Kernel#inspect
     Kernel_prototype.$inspect = function() {
       
       return this.$to_s();
     };
 
+    // line 400, (corelib), Kernel#instance_of?
     Kernel_prototype.$instance_of$p = function(klass) {
       
       return this._klass === klass;
     };
 
+    // line 404, (corelib), Kernel#instance_variable_defined?
     Kernel_prototype.$instance_variable_defined$p = function(name) {
       
       return __hasOwn.call(this, name.substr(1));
     };
 
+    // line 408, (corelib), Kernel#instance_variable_get
     Kernel_prototype.$instance_variable_get = function(name) {
       
       
@@ -983,11 +991,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 416, (corelib), Kernel#instance_variable_set
     Kernel_prototype.$instance_variable_set = function(name, value) {
       
       return this[name.substr(1)] = value;
     };
 
+    // line 420, (corelib), Kernel#instance_variables
     Kernel_prototype.$instance_variables = function() {
       
       
@@ -1001,6 +1011,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 432, (corelib), Kernel#is_a?
     Kernel_prototype.$is_a$p = function(klass) {
       
       
@@ -1020,6 +1031,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Kernel_prototype.$kind_of$p = Kernel_prototype.$is_a$p;
 
+    // line 450, (corelib), Kernel#lambda
     Kernel_prototype.$lambda = TMP_9 = function() {
       var __context, block;
       block = TMP_9._p || nil, __context = block._s, TMP_9._p = null;
@@ -1027,6 +1039,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return block;
     };
 
+    // line 454, (corelib), Kernel#loop
     Kernel_prototype.$loop = TMP_10 = function() {
       var __context, block;
       block = TMP_10._p || nil, __context = block._s, TMP_10._p = null;
@@ -1045,16 +1058,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 468, (corelib), Kernel#nil?
     Kernel_prototype.$nil$p = function() {
       
       return false;
     };
 
+    // line 472, (corelib), Kernel#object_id
     Kernel_prototype.$object_id = function() {
       
       return this._id || (this._id = unique_id++);
     };
 
+    // line 476, (corelib), Kernel#proc
     Kernel_prototype.$proc = TMP_11 = function() {
       var __context, block;
       block = TMP_11._p || nil, __context = block._s, TMP_11._p = null;
@@ -1068,6 +1084,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 486, (corelib), Kernel#puts
     Kernel_prototype.$puts = function(strs) {
       strs = __slice.call(arguments, 0);
       
@@ -1080,6 +1097,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Kernel_prototype.$print = Kernel_prototype.$puts;
 
+    // line 497, (corelib), Kernel#raise
     Kernel_prototype.$raise = function(exception, string) {
       
       
@@ -1094,16 +1112,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 510, (corelib), Kernel#rand
     Kernel_prototype.$rand = function(max) {
       
       return max == null ? Math.random() : Math.floor(Math.random() * max);
     };
 
+    // line 514, (corelib), Kernel#respond_to?
     Kernel_prototype.$respond_to$p = function(name) {
       
       return !!this[mid_to_jsid(name)];
     };
 
+    // line 518, (corelib), Kernel#singleton_class
     Kernel_prototype.$singleton_class = function() {
       
       
@@ -1132,6 +1153,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 545, (corelib), Kernel#tap
     Kernel_prototype.$tap = TMP_12 = function() {
       var __context, block;
       block = TMP_12._p || nil, __context = block._s, TMP_12._p = null;
@@ -1141,21 +1163,25 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 552, (corelib), Kernel#to_json
     Kernel_prototype.$to_json = function() {
       
       return this.$to_s().$to_json();
     };
 
+    // line 556, (corelib), Kernel#to_proc
     Kernel_prototype.$to_proc = function() {
       
       return this;
     };
 
+    // line 560, (corelib), Kernel#to_s
     Kernel_prototype.$to_s = function() {
       
       return "#<" + this._klass._real._name + ":0x" + (this._id * 400487).toString(16) + ">";
     };
 
+    // line 564, (corelib), Kernel#enum_for
     Kernel_prototype.$enum_for = function(method, args) {
       var __a;if (method == null) {
         method = "each"
@@ -1164,15 +1190,17 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     };
 
     Kernel_prototype.$to_enum = Kernel_prototype.$enum_for;
-        ;Kernel._donate(["$match$", "$eq$", "$eqq$", "$Array", "$class", "$define_singleton_method", "$equal$p", "$extend", "$hash", "$inspect", "$instance_of$p", "$instance_variable_defined$p", "$instance_variable_get", "$instance_variable_set", "$instance_variables", "$is_a$p", "$kind_of$p", "$kind_of$p", "$lambda", "$loop", "$nil$p", "$object_id", "$proc", "$puts", "$print", "$print", "$raise", "$rand", "$respond_to$p", "$singleton_class", "$tap", "$to_json", "$to_proc", "$to_s", "$enum_for", "$to_enum", "$to_enum"]);
+        ;Kernel._donate(["$match$", "$eq$", "$eqq$", "$Array", "$class", "$define_singleton_method", "$equal$p", "$extend", "$hash", "$inspect", "$instance_of$p", "$instance_variable_defined$p", "$instance_variable_get", "$instance_variable_set", "$instance_variables", "$is_a$p", "$kind_of$p", "$lambda", "$loop", "$nil$p", "$object_id", "$proc", "$puts", "$print", "$raise", "$rand", "$respond_to$p", "$singleton_class", "$tap", "$to_json", "$to_proc", "$to_s", "$enum_for", "$to_enum"]);
   })(self);
   (function(__base, __super){
+    // line 570, (corelib), class Object
     function Object() {};
     Object = __klass(__base, __super, "Object", Object);
     var Object_prototype = Object.prototype, __scope = Object._scope;
 
     Object.$include(__scope.Kernel);
 
+    // line 574, (corelib), Object#methods
     Object_prototype.$methods = function() {
       
       return [];
@@ -1184,11 +1212,12 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Object_prototype.$public_methods = Object_prototype.$methods;
 
+    // line 583, (corelib), Object#singleton_methods
     Object_prototype.$singleton_methods = function() {
       
       return [];
     };
-    ;Object._donate(["$methods", "$private_methods", "$private_methods", "$protected_methods", "$protected_methods", "$public_methods", "$public_methods", "$singleton_methods"]);
+    ;Object._donate(["$methods", "$private_methods", "$protected_methods", "$public_methods", "$singleton_methods"]);
   })(self, null);
   self.$singleton_class().prototype.$to_s = function() {
     
@@ -1199,6 +1228,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     return __scope.Object.$include(mod)
   };
   (function(__base, __super){
+    // line 594, (corelib), class Boolean
     function Boolean() {};
     Boolean = __klass(__base, __super, "Boolean", Boolean);
     var Boolean_prototype = Boolean.prototype, __scope = Boolean._scope;
@@ -1207,91 +1237,102 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Boolean_prototype._isBoolean = true;
   
 
+    // line 599, (corelib), Boolean#&
     Boolean_prototype.$and$ = function(other) {
       
       return (this == true) ? (other !== false && other !== nil) : false;
     };
 
+    // line 603, (corelib), Boolean#|
     Boolean_prototype.$or$ = function(other) {
       
       return (this == true) ? true : (other !== false && other !== nil);
     };
 
+    // line 607, (corelib), Boolean#^
     Boolean_prototype.$xor$ = function(other) {
       
       return (this == true) ? (other === false || other === nil) : (other !== false && other !== nil);
     };
 
+    // line 611, (corelib), Boolean#==
     Boolean_prototype.$eq$ = function(other) {
       
       return (this == true) === other.valueOf();
     };
 
-    Boolean_prototype.$class = function() {
-      
-      return (this == true) ? __scope.TrueClass : __scope.FalseClass;
-    };
-
     Boolean_prototype.$singleton_class = Boolean_prototype.$class;
 
+    // line 617, (corelib), Boolean#to_json
     Boolean_prototype.$to_json = function() {
       
       return this.valueOf() ? 'true' : 'false';
     };
 
+    // line 621, (corelib), Boolean#to_s
     Boolean_prototype.$to_s = function() {
       
       return (this == true) ? 'true' : 'false';
     };
-    ;Boolean._donate(["$and$", "$or$", "$xor$", "$eq$", "$class", "$singleton_class", "$singleton_class", "$to_json", "$to_s"]);
+    ;Boolean._donate(["$and$", "$or$", "$xor$", "$eq$", "$singleton_class", "$to_json", "$to_s"]);
   })(self, Boolean);
   __scope.TRUE = true;
   __scope.FALSE = false;
   (function(__base, __super){
+    // line 628, (corelib), class NilClass
     function NilClass() {};
     NilClass = __klass(__base, __super, "NilClass", NilClass);
     var NilClass_prototype = NilClass.prototype, __scope = NilClass._scope;
 
+    // line 629, (corelib), NilClass#&
     NilClass_prototype.$and$ = function(other) {
       
       return false;
     };
 
+    // line 633, (corelib), NilClass#|
     NilClass_prototype.$or$ = function(other) {
       
       return other !== false && other !== nil;
     };
 
+    // line 637, (corelib), NilClass#^
     NilClass_prototype.$xor$ = function(other) {
       
       return other !== false && other !== nil;
     };
 
+    // line 641, (corelib), NilClass#==
     NilClass_prototype.$eq$ = function(other) {
       
       return other === nil;
     };
 
+    // line 645, (corelib), NilClass#inspect
     NilClass_prototype.$inspect = function() {
       
       return "nil";
     };
 
+    // line 649, (corelib), NilClass#nil?
     NilClass_prototype.$nil$p = function() {
       
       return true;
     };
 
+    // line 653, (corelib), NilClass#singleton_class
     NilClass_prototype.$singleton_class = function() {
       
       return __scope.NilClass;
     };
 
+    // line 657, (corelib), NilClass#to_a
     NilClass_prototype.$to_a = function() {
       
       return [];
     };
 
+    // line 661, (corelib), NilClass#to_i
     NilClass_prototype.$to_i = function() {
       
       return 0;
@@ -1299,23 +1340,27 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     NilClass_prototype.$to_f = NilClass_prototype.$to_i;
 
+    // line 667, (corelib), NilClass#to_json
     NilClass_prototype.$to_json = function() {
       
       return "null";
     };
 
+    // line 671, (corelib), NilClass#to_s
     NilClass_prototype.$to_s = function() {
       
       return "";
     };
-    ;NilClass._donate(["$and$", "$or$", "$xor$", "$eq$", "$inspect", "$nil$p", "$singleton_class", "$to_a", "$to_i", "$to_f", "$to_f", "$to_json", "$to_s"]);
+    ;NilClass._donate(["$and$", "$or$", "$xor$", "$eq$", "$inspect", "$nil$p", "$singleton_class", "$to_a", "$to_i", "$to_f", "$to_json", "$to_s"]);
   })(self, null);
   __scope.NIL = nil;
   (function(__base){
+    // line 677, (corelib), module Enumerable
     function Enumerable() {};
     Enumerable = __module(__base, "Enumerable", Enumerable);
     var Enumerable_prototype = Enumerable.prototype, __scope = Enumerable._scope, TMP_13, TMP_14, TMP_15, TMP_16, TMP_17, TMP_18, TMP_19, TMP_20, TMP_21, TMP_22, TMP_23;
 
+    // line 678, (corelib), Enumerable#all?
     Enumerable_prototype.$all$p = TMP_13 = function() {
       var __context, block;
       block = TMP_13._p || nil, __context = block._s, TMP_13._p = null;
@@ -1357,6 +1402,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 716, (corelib), Enumerable#any?
     Enumerable_prototype.$any$p = TMP_14 = function() {
       var __context, block;
       block = TMP_14._p || nil, __context = block._s, TMP_14._p = null;
@@ -1398,6 +1444,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 754, (corelib), Enumerable#collect
     Enumerable_prototype.$collect = TMP_15 = function() {
       var __context, block;
       block = TMP_15._p || nil, __context = block._s, TMP_15._p = null;
@@ -1425,6 +1472,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 777, (corelib), Enumerable#count
     Enumerable_prototype.$count = TMP_16 = function(object) {
       var __context, block;
       block = TMP_16._p || nil, __context = block._s, TMP_16._p = null;
@@ -1460,6 +1508,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 809, (corelib), Enumerable#detect
     Enumerable_prototype.$detect = TMP_17 = function(ifnone) {
       var __context, block;
       block = TMP_17._p || nil, __context = block._s, TMP_17._p = null;
@@ -1499,6 +1548,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 844, (corelib), Enumerable#drop
     Enumerable_prototype.$drop = function(number) {
       
       
@@ -1519,6 +1569,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 863, (corelib), Enumerable#drop_while
     Enumerable_prototype.$drop_while = TMP_18 = function() {
       var __context, block;
       block = TMP_18._p || nil, __context = block._s, TMP_18._p = null;
@@ -1550,6 +1601,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 890, (corelib), Enumerable#each_with_index
     Enumerable_prototype.$each_with_index = TMP_19 = function() {
       var __context, block;
       block = TMP_19._p || nil, __context = block._s, TMP_19._p = null;
@@ -1576,6 +1628,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 912, (corelib), Enumerable#each_with_object
     Enumerable_prototype.$each_with_object = TMP_20 = function(object) {
       var __context, block;
       block = TMP_20._p || nil, __context = block._s, TMP_20._p = null;
@@ -1598,6 +1651,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 930, (corelib), Enumerable#entries
     Enumerable_prototype.$entries = function() {
       
       
@@ -1615,6 +1669,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Enumerable_prototype.$find = Enumerable_prototype.$detect;
 
+    // line 946, (corelib), Enumerable#find_all
     Enumerable_prototype.$find_all = TMP_21 = function() {
       var __context, block;
       block = TMP_21._p || nil, __context = block._s, TMP_21._p = null;
@@ -1647,6 +1702,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 974, (corelib), Enumerable#find_index
     Enumerable_prototype.$find_index = TMP_22 = function(object) {
       var __context, block;
       block = TMP_22._p || nil, __context = block._s, TMP_22._p = null;
@@ -1691,6 +1747,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1015, (corelib), Enumerable#first
     Enumerable_prototype.$first = function(number) {
       
       
@@ -1723,6 +1780,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1046, (corelib), Enumerable#grep
     Enumerable_prototype.$grep = TMP_23 = function(pattern) {
       var __context, block;
       block = TMP_23._p || nil, __context = block._s, TMP_23._p = null;
@@ -1759,9 +1817,10 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Enumerable_prototype.$take = Enumerable_prototype.$first;
 
     Enumerable_prototype.$to_a = Enumerable_prototype.$entries;
-        ;Enumerable._donate(["$all$p", "$any$p", "$collect", "$count", "$detect", "$drop", "$drop_while", "$each_with_index", "$each_with_object", "$entries", "$find", "$find", "$find_all", "$find_index", "$first", "$grep", "$take", "$take", "$to_a", "$to_a"]);
+        ;Enumerable._donate(["$all$p", "$any$p", "$collect", "$count", "$detect", "$drop", "$drop_while", "$each_with_index", "$each_with_object", "$entries", "$find", "$find_all", "$find_index", "$first", "$grep", "$take", "$to_a"]);
   })(self);
   (function(__base, __super){
+    // line 1080, (corelib), class Enumerator
     function Enumerator() {};
     Enumerator = __klass(__base, __super, "Enumerator", Enumerator);
     var Enumerator_prototype = Enumerator.prototype, __scope = Enumerator._scope, TMP_25, TMP_26, TMP_27, TMP_28, TMP_29;
@@ -1770,47 +1829,55 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Enumerator.$include(__scope.Enumerable);
 
     (function(__base, __super){
+      // line 1083, (corelib), class Yielder
       function Yielder() {};
       Yielder = __klass(__base, __super, "Yielder", Yielder);
       var Yielder_prototype = Yielder.prototype, __scope = Yielder._scope;
       Yielder_prototype.block = Yielder_prototype.call = nil;
 
+      // line 1084, (corelib), Yielder#initialize
       Yielder_prototype.$initialize = function(block) {
         
         return this.block = block;
       };
 
+      // line 1088, (corelib), Yielder#call
       Yielder_prototype.$call = function(block) {
         
         this.call = block;
         return this.block.$call();
       };
 
+      // line 1094, (corelib), Yielder#yield
       Yielder_prototype.$yield = function(value) {
         
         return this.call.$call(value);
       };
 
       Yielder_prototype.$lshft$ = Yielder_prototype.$yield;
-      ;Yielder._donate(["$initialize", "$call", "$yield", "$lshft$", "$lshft$"]);
+      ;Yielder._donate(["$initialize", "$call", "$yield", "$lshft$"]);
     })(Enumerator, null);
 
     (function(__base, __super){
+      // line 1101, (corelib), class Generator
       function Generator() {};
       Generator = __klass(__base, __super, "Generator", Generator);
       var Generator_prototype = Generator.prototype, __scope = Generator._scope, TMP_24;
       Generator_prototype.enumerator = Generator_prototype.yielder = nil;
 
+      // line 1102, (corelib), Generator#enumerator
       Generator_prototype.$enumerator = function() {
         
         return this.enumerator
       };
 
+      // line 1104, (corelib), Generator#initialize
       Generator_prototype.$initialize = function(block) {
         
         return this.yielder = __scope.Yielder.$new(block);
       };
 
+      // line 1108, (corelib), Generator#each
       Generator_prototype.$each = TMP_24 = function() {
         var __context, block;
         block = TMP_24._p || nil, __context = block._s, TMP_24._p = null;
@@ -1820,6 +1887,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       ;Generator._donate(["$enumerator", "$initialize", "$each"]);
     })(Enumerator, null);
 
+    // line 1113, (corelib), Enumerator#initialize
     Enumerator_prototype.$initialize = TMP_25 = function(object, method, args) {
       var __a, __context, block;
       block = TMP_25._p || nil, __context = block._s, TMP_25._p = null;
@@ -1839,6 +1907,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.args = args;
     };
 
+    // line 1125, (corelib), Enumerator#next
     Enumerator_prototype.$next = function() {
       var result = nil, __a;
       this.$_init_cache();
@@ -1847,6 +1916,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return result;
     };
 
+    // line 1134, (corelib), Enumerator#next_values
     Enumerator_prototype.$next_values = function() {
       var result = nil, __a;
       result = this.$next();
@@ -1857,12 +1927,14 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       };
     };
 
+    // line 1140, (corelib), Enumerator#peek
     Enumerator_prototype.$peek = function() {
       var __a;
       this.$_init_cache();
       return (__a = this.cache.$aref$(this.current), __a !== false && __a !== nil ? __a : this.$raise(__scope.StopIteration, "iteration reached an end"));
     };
 
+    // line 1146, (corelib), Enumerator#peel_values
     Enumerator_prototype.$peel_values = function() {
       var result = nil, __a;
       result = this.$peek();
@@ -1873,11 +1945,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       };
     };
 
+    // line 1152, (corelib), Enumerator#rewind
     Enumerator_prototype.$rewind = function() {
       
       return this.$_clear_cache();
     };
 
+    // line 1156, (corelib), Enumerator#each
     Enumerator_prototype.$each = TMP_26 = function() {
       var __a, __context, block;
       block = TMP_26._p || nil, __context = block._s, TMP_26._p = null;
@@ -1888,6 +1962,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return (__a = this.object, __a.$__send__._p = block.$to_proc(), __a.$__send__.apply(__a, [this.method].concat(this.args)));
     };
 
+    // line 1162, (corelib), Enumerator#each_with_index
     Enumerator_prototype.$each_with_index = TMP_27 = function() {
       var __a, __context, block;
       block = TMP_27._p || nil, __context = block._s, TMP_27._p = null;
@@ -1895,6 +1970,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return (__a = this, __a.$with_index._p = block.$to_proc(), __a.$with_index());
     };
 
+    // line 1166, (corelib), Enumerator#with_index
     Enumerator_prototype.$with_index = TMP_28 = function(offset) {
       var current = nil, __a, __b, __context, __yield;
       __yield = TMP_28._p || nil, __context = __yield._s, TMP_28._p = null;
@@ -1917,6 +1993,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       }, __a._s = this, __a), __b.$each());
     };
 
+    // line 1180, (corelib), Enumerator#with_object
     Enumerator_prototype.$with_object = TMP_29 = function(object) {
       var __a, __b, __context, __yield;
       __yield = TMP_29._p || nil, __context = __yield._s, TMP_29._p = null;
@@ -1926,18 +2003,20 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       };
       return (__b = this, __b.$each._p = (__a = function(args) {
 
-        
+        var __a;
         args = __slice.call(arguments, 0);
-        return __yield.apply(__context, [].concat(args).concat([["object"]]))
+        return __a = __yield.apply(__context, [].concat(args).concat([["object"]])), __a === __breaker ? __breaker.$v : __a
       }, __a._s = this, __a), __b.$each());
     };
 
+    // line 1188, (corelib), Enumerator#_init_cache
     Enumerator_prototype.$_init_cache = function() {
       var __a;
       (__a = this.current, __a !== false && __a !== nil ? __a : this.current = 0);
       return (__a = this.cache, __a !== false && __a !== nil ? __a : this.cache = this.$to_a());
     };
 
+    // line 1193, (corelib), Enumerator#_clear_cache
     Enumerator_prototype.$_clear_cache = function() {
       
       this.cache = nil;
@@ -1946,35 +2025,42 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;Enumerator._donate(["$initialize", "$next", "$next_values", "$peek", "$peel_values", "$rewind", "$each", "$each_with_index", "$with_index", "$with_object", "$_init_cache", "$_clear_cache"]);
   })(self, null);
   (function(__base){
+    // line 1198, (corelib), module Comparable
     function Comparable() {};
     Comparable = __module(__base, "Comparable", Comparable);
     var Comparable_prototype = Comparable.prototype, __scope = Comparable._scope;
 
+    // line 1199, (corelib), Comparable#<
     Comparable_prototype.$lt$ = function(other) {
       
       return this.$cmp$(other).$eq$(-1);
     };
 
+    // line 1203, (corelib), Comparable#<=
     Comparable_prototype.$le$ = function(other) {
       
       return this.$cmp$(other).$le$(0);
     };
 
+    // line 1207, (corelib), Comparable#==
     Comparable_prototype.$eq$ = function(other) {
       
       return this.$cmp$(other).$eq$(0);
     };
 
+    // line 1211, (corelib), Comparable#>
     Comparable_prototype.$gt$ = function(other) {
       
       return this.$cmp$(other).$eq$(1);
     };
 
+    // line 1215, (corelib), Comparable#>=
     Comparable_prototype.$ge$ = function(other) {
       
       return this.$cmp$(other).$ge$(0);
     };
 
+    // line 1219, (corelib), Comparable#between?
     Comparable_prototype.$between$p = function(min, max) {
       var __a;
       return (__a = this.$gt$(min) ? this.$lt$(max) : __a);
@@ -1982,6 +2068,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         ;Comparable._donate(["$lt$", "$le$", "$eq$", "$gt$", "$ge$", "$between$p"]);
   })(self);
   (function(__base, __super){
+    // line 1223, (corelib), class Array
     function Array() {};
     Array = __klass(__base, __super, "Array", Array);
     var Array_prototype = Array.prototype, __scope = Array._scope, TMP_30, TMP_31, TMP_32, TMP_33, TMP_34, TMP_35, TMP_36, TMP_37, TMP_38, TMP_39, TMP_40, TMP_41, TMP_42, TMP_43, TMP_44, TMP_45, TMP_46, TMP_47, TMP_48;
@@ -1992,6 +2079,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array.$include(__scope.Enumerable);
 
+    // line 1230, (corelib), Array.[]
     Array.$aref$ = function(objects) {
       objects = __slice.call(arguments, 0);
       
@@ -2003,11 +2091,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1240, (corelib), Array.new
     Array.$new = function(a) {
       a = __slice.call(arguments, 0);
       return this.$allocate()
     };
 
+    // line 1244, (corelib), Array#&
     Array_prototype.$and$ = function(other) {
       
       
@@ -2034,6 +2124,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1269, (corelib), Array#*
     Array_prototype.$mul$ = function(other) {
       
       
@@ -2051,17 +2142,20 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1285, (corelib), Array#+
     Array_prototype.$plus$ = function(other) {
       
       return this.slice().concat(other.slice());
     };
 
+    // line 1289, (corelib), Array#<<
     Array_prototype.$lshft$ = function(object) {
       
       this.push(object);
       return this;
     };
 
+    // line 1295, (corelib), Array#<=>
     Array_prototype.$cmp$ = function(other) {
       
       
@@ -2083,6 +2177,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1315, (corelib), Array#==
     Array_prototype.$eq$ = function(other) {
       
       
@@ -2100,6 +2195,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1332, (corelib), Array#[]
     Array_prototype.$aref$ = function(index, length) {
       
       
@@ -2148,6 +2244,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1380, (corelib), Array#[]=
     Array_prototype.$aset$ = function(index, value) {
       
       
@@ -2161,6 +2258,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1392, (corelib), Array#assoc
     Array_prototype.$assoc = function(object) {
       
       
@@ -2174,6 +2272,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1404, (corelib), Array#at
     Array_prototype.$at = function(index) {
       
       
@@ -2189,17 +2288,20 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1418, (corelib), Array#clear
     Array_prototype.$clear = function() {
       
       this.splice(0);
       return this;
     };
 
+    // line 1424, (corelib), Array#clone
     Array_prototype.$clone = function() {
       
       return this.slice();
     };
 
+    // line 1428, (corelib), Array#collect
     Array_prototype.$collect = TMP_30 = function() {
       var __context, block;
       block = TMP_30._p || nil, __context = block._s, TMP_30._p = null;
@@ -2222,6 +2324,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1446, (corelib), Array#collect!
     Array_prototype.$collect$b = TMP_31 = function() {
       var __context, block;
       block = TMP_31._p || nil, __context = block._s, TMP_31._p = null;
@@ -2241,6 +2344,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1462, (corelib), Array#compact
     Array_prototype.$compact = function() {
       
       
@@ -2256,6 +2360,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1476, (corelib), Array#compact!
     Array_prototype.$compact$b = function() {
       
       
@@ -2274,6 +2379,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1493, (corelib), Array#concat
     Array_prototype.$concat = function(other) {
       
       
@@ -2284,6 +2390,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1503, (corelib), Array#count
     Array_prototype.$count = function(object) {
       
       
@@ -2303,6 +2410,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1521, (corelib), Array#delete
     Array_prototype.$delete = function(object) {
       
       
@@ -2321,6 +2429,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1538, (corelib), Array#delete_at
     Array_prototype.$delete_at = function(index) {
       
       
@@ -2340,6 +2449,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1556, (corelib), Array#delete_if
     Array_prototype.$delete_if = TMP_32 = function() {
       var __context, block;
       block = TMP_32._p || nil, __context = block._s, TMP_32._p = null;
@@ -2364,11 +2474,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1577, (corelib), Array#drop
     Array_prototype.$drop = function(number) {
       
       return this.slice(number);
     };
 
+    // line 1581, (corelib), Array#drop_while
     Array_prototype.$drop_while = TMP_33 = function() {
       var __context, block;
       block = TMP_33._p || nil, __context = block._s, TMP_33._p = null;
@@ -2393,6 +2505,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array_prototype.$dup = Array_prototype.$clone;
 
+    // line 1601, (corelib), Array#each
     Array_prototype.$each = TMP_34 = function() {
       var __context, block;
       block = TMP_34._p || nil, __context = block._s, TMP_34._p = null;
@@ -2406,6 +2519,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1611, (corelib), Array#each_index
     Array_prototype.$each_index = TMP_35 = function() {
       var __context, block;
       block = TMP_35._p || nil, __context = block._s, TMP_35._p = null;
@@ -2419,6 +2533,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1621, (corelib), Array#each_with_index
     Array_prototype.$each_with_index = TMP_36 = function() {
       var __context, block;
       block = TMP_36._p || nil, __context = block._s, TMP_36._p = null;
@@ -2432,11 +2547,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1631, (corelib), Array#empty?
     Array_prototype.$empty$p = function() {
       
       return !this.length;
     };
 
+    // line 1635, (corelib), Array#fetch
     Array_prototype.$fetch = TMP_37 = function(index, defaults) {
       var __context, block;
       block = TMP_37._p || nil, __context = block._s, TMP_37._p = null;
@@ -2464,6 +2581,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1659, (corelib), Array#first
     Array_prototype.$first = function(count) {
       
       
@@ -2475,6 +2593,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1669, (corelib), Array#flatten
     Array_prototype.$flatten = function(level) {
       
       
@@ -2503,6 +2622,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1696, (corelib), Array#flatten!
     Array_prototype.$flatten$b = function(level) {
       
       
@@ -2513,6 +2633,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1705, (corelib), Array#grep
     Array_prototype.$grep = function(pattern) {
       
       
@@ -2530,11 +2651,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1721, (corelib), Array#hash
     Array_prototype.$hash = function() {
       
       return this._id || (this._id = unique_id++);
     };
 
+    // line 1725, (corelib), Array#include?
     Array_prototype.$include$p = function(member) {
       
       
@@ -2548,6 +2671,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1737, (corelib), Array#index
     Array_prototype.$index = TMP_38 = function(object) {
       var __a, __b, __context, block;
       block = TMP_38._p || nil, __context = block._s, TMP_38._p = null;
@@ -2579,6 +2703,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1764, (corelib), Array#inject
     Array_prototype.$inject = TMP_39 = function(initial) {
       var __context, block;
       block = TMP_39._p || nil, __context = block._s, TMP_39._p = null;
@@ -2608,6 +2733,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1789, (corelib), Array#insert
     Array_prototype.$insert = function(index, objects) {
       objects = __slice.call(arguments, 1);
       
@@ -2631,6 +2757,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1812, (corelib), Array#inspect
     Array_prototype.$inspect = function() {
       
       
@@ -2644,6 +2771,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1824, (corelib), Array#join
     Array_prototype.$join = function(sep) {
       if (sep == null) {
         sep = ""
@@ -2659,6 +2787,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1836, (corelib), Array#keep_if
     Array_prototype.$keep_if = TMP_40 = function() {
       var __context, block;
       block = TMP_40._p || nil, __context = block._s, TMP_40._p = null;
@@ -2683,6 +2812,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1856, (corelib), Array#last
     Array_prototype.$last = function(count) {
       
       
@@ -2703,6 +2833,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1875, (corelib), Array#length
     Array_prototype.$length = function() {
       
       return this.length;
@@ -2712,6 +2843,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array_prototype.$map$b = Array_prototype.$collect$b;
 
+    // line 1883, (corelib), Array#pop
     Array_prototype.$pop = function(count) {
       
       
@@ -2729,6 +2861,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1899, (corelib), Array#push
     Array_prototype.$push = function(objects) {
       objects = __slice.call(arguments, 0);
       
@@ -2739,6 +2872,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1909, (corelib), Array#rassoc
     Array_prototype.$rassoc = function(object) {
       
       
@@ -2756,6 +2890,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1925, (corelib), Array#reject
     Array_prototype.$reject = TMP_41 = function() {
       var __context, block;
       block = TMP_41._p || nil, __context = block._s, TMP_41._p = null;
@@ -2779,6 +2914,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1944, (corelib), Array#reject!
     Array_prototype.$reject$b = TMP_42 = function() {
       var __context, block;
       block = TMP_42._p || nil, __context = block._s, TMP_42._p = null;
@@ -2806,6 +2942,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1967, (corelib), Array#replace
     Array_prototype.$replace = function(other) {
       
       
@@ -2815,11 +2952,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1975, (corelib), Array#reverse
     Array_prototype.$reverse = function() {
       
       return this.reverse();
     };
 
+    // line 1979, (corelib), Array#reverse!
     Array_prototype.$reverse$b = function() {
       
       
@@ -2829,6 +2968,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 1987, (corelib), Array#reverse_each
     Array_prototype.$reverse_each = TMP_43 = function() {
       var __a, __context, block;
       block = TMP_43._p || nil, __context = block._s, TMP_43._p = null;
@@ -2840,6 +2980,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 1995, (corelib), Array#rindex
     Array_prototype.$rindex = TMP_44 = function(object) {
       var __context, block;
       block = TMP_44._p || nil, __context = block._s, TMP_44._p = null;
@@ -2871,6 +3012,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2022, (corelib), Array#select
     Array_prototype.$select = TMP_45 = function() {
       var __context, block;
       block = TMP_45._p || nil, __context = block._s, TMP_45._p = null;
@@ -2897,6 +3039,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2044, (corelib), Array#select!
     Array_prototype.$select$b = TMP_46 = function() {
       var __context, block;
       block = TMP_46._p || nil, __context = block._s, TMP_46._p = null;
@@ -2926,6 +3069,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2068, (corelib), Array#shift
     Array_prototype.$shift = function(count) {
       
       return count == null ? this.shift() : this.splice(0, count);
@@ -2935,6 +3079,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array_prototype.$slice = Array_prototype.$aref$;
 
+    // line 2076, (corelib), Array#slice!
     Array_prototype.$slice$b = function(index, length) {
       
       
@@ -2954,11 +3099,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2094, (corelib), Array#take
     Array_prototype.$take = function(count) {
       
       return this.slice(0, count);
     };
 
+    // line 2098, (corelib), Array#take_while
     Array_prototype.$take_while = TMP_47 = function() {
       var __context, block;
       block = TMP_47._p || nil, __context = block._s, TMP_47._p = null;
@@ -2987,6 +3134,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2122, (corelib), Array#to_a
     Array_prototype.$to_a = function() {
       
       return this;
@@ -2994,6 +3142,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array_prototype.$to_ary = Array_prototype.$to_a;
 
+    // line 2128, (corelib), Array#to_json
     Array_prototype.$to_json = function() {
       
       
@@ -3009,6 +3158,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Array_prototype.$to_s = Array_prototype.$inspect;
 
+    // line 2142, (corelib), Array#uniq
     Array_prototype.$uniq = function() {
       
       
@@ -3030,6 +3180,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2162, (corelib), Array#uniq!
     Array_prototype.$uniq$b = function() {
       
       
@@ -3055,6 +3206,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2186, (corelib), Array#unshift
     Array_prototype.$unshift = function(objects) {
       objects = __slice.call(arguments, 0);
       
@@ -3066,6 +3218,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2196, (corelib), Array#zip
     Array_prototype.$zip = TMP_48 = function(others) {
       var __context, block;
       block = TMP_48._p || nil, __context = block._s, TMP_48._p = null;
@@ -3100,9 +3253,10 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return result;
     
     };
-    ;Array._donate(["$and$", "$mul$", "$plus$", "$lshft$", "$cmp$", "$eq$", "$aref$", "$aset$", "$assoc", "$at", "$clear", "$clone", "$collect", "$collect$b", "$compact", "$compact$b", "$concat", "$count", "$delete", "$delete_at", "$delete_if", "$drop", "$drop_while", "$dup", "$dup", "$each", "$each_index", "$each_with_index", "$empty$p", "$fetch", "$first", "$flatten", "$flatten$b", "$grep", "$hash", "$include$p", "$index", "$inject", "$insert", "$inspect", "$join", "$keep_if", "$last", "$length", "$map", "$map", "$map$b", "$map$b", "$pop", "$push", "$rassoc", "$reject", "$reject$b", "$replace", "$reverse", "$reverse$b", "$reverse_each", "$rindex", "$select", "$select$b", "$shift", "$size", "$size", "$slice", "$slice", "$slice$b", "$take", "$take_while", "$to_a", "$to_ary", "$to_ary", "$to_json", "$to_s", "$to_s", "$uniq", "$uniq$b", "$unshift", "$zip"]);    ;Array._sdonate(["$aref$", "$new"]);
+    ;Array._donate(["$and$", "$mul$", "$plus$", "$lshft$", "$cmp$", "$eq$", "$aref$", "$aset$", "$assoc", "$at", "$clear", "$clone", "$collect", "$collect$b", "$compact", "$compact$b", "$concat", "$count", "$delete", "$delete_at", "$delete_if", "$drop", "$drop_while", "$dup", "$each", "$each_index", "$each_with_index", "$empty$p", "$fetch", "$first", "$flatten", "$flatten$b", "$grep", "$hash", "$include$p", "$index", "$inject", "$insert", "$inspect", "$join", "$keep_if", "$last", "$length", "$map", "$map$b", "$pop", "$push", "$rassoc", "$reject", "$reject$b", "$replace", "$reverse", "$reverse$b", "$reverse_each", "$rindex", "$select", "$select$b", "$shift", "$size", "$slice", "$slice$b", "$take", "$take_while", "$to_a", "$to_ary", "$to_json", "$to_s", "$uniq", "$uniq$b", "$unshift", "$zip"]);    ;Array._sdonate(["$aref$", "$new"]);
   })(self, Array);
   (function(__base, __super){
+    // line 2228, (corelib), class Hash
     function Hash() {};
     Hash = __klass(__base, __super, "Hash", Hash);
     var Hash_prototype = Hash.prototype, __scope = Hash._scope, TMP_49, TMP_50, TMP_51, TMP_52, TMP_53, TMP_54, TMP_55, TMP_56, TMP_57, TMP_58, TMP_59, TMP_60;
@@ -3128,16 +3282,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     };
   
 
+    // line 2250, (corelib), Hash.[]
     Hash.$aref$ = function(objs) {
       objs = __slice.call(arguments, 0);
       return __hash.apply(null, objs);
     };
 
+    // line 2254, (corelib), Hash.allocate
     Hash.$allocate = function() {
       
       return __hash();
     };
 
+    // line 2258, (corelib), Hash.new
     Hash.$new = TMP_49 = function(defaults) {
       var __context, block;
       block = TMP_49._p || nil, __context = block._s, TMP_49._p = null;
@@ -3156,6 +3313,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2273, (corelib), Hash#==
     Hash_prototype.$eq$ = function(other) {
       
       
@@ -3187,6 +3345,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2303, (corelib), Hash#[]
     Hash_prototype.$aref$ = function(key) {
       
       
@@ -3200,6 +3359,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2315, (corelib), Hash#[]=
     Hash_prototype.$aset$ = function(key, value) {
       
       
@@ -3209,6 +3369,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2323, (corelib), Hash#assoc
     Hash_prototype.$assoc = function(object) {
       
       
@@ -3224,6 +3385,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2337, (corelib), Hash#clear
     Hash_prototype.$clear = function() {
       
       
@@ -3233,6 +3395,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2345, (corelib), Hash#clone
     Hash_prototype.$clone = function() {
       
       
@@ -3248,26 +3411,31 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2359, (corelib), Hash#default
     Hash_prototype.$default = function() {
       
       return this.none;
     };
 
+    // line 2363, (corelib), Hash#default=
     Hash_prototype.$default$e = function(object) {
       
       return this.none = object;
     };
 
+    // line 2367, (corelib), Hash#default_proc
     Hash_prototype.$default_proc = function() {
       
       return this.proc;
     };
 
+    // line 2371, (corelib), Hash#default_proc=
     Hash_prototype.$default_proc$e = function(proc) {
       
       return this.proc = proc;
     };
 
+    // line 2375, (corelib), Hash#delete
     Hash_prototype.$delete = function(key) {
       
       
@@ -3283,6 +3451,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2389, (corelib), Hash#delete_if
     Hash_prototype.$delete_if = TMP_50 = function() {
       var __context, block;
       block = TMP_50._p || nil, __context = block._s, TMP_50._p = null;
@@ -3312,6 +3481,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$dup = Hash_prototype.$clone;
 
+    // line 2414, (corelib), Hash#each
     Hash_prototype.$each = TMP_51 = function() {
       var __context, block;
       block = TMP_51._p || nil, __context = block._s, TMP_51._p = null;
@@ -3334,6 +3504,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2432, (corelib), Hash#each_key
     Hash_prototype.$each_key = TMP_52 = function() {
       var __context, block;
       block = TMP_52._p || nil, __context = block._s, TMP_52._p = null;
@@ -3358,6 +3529,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$each_pair = Hash_prototype.$each;
 
+    // line 2452, (corelib), Hash#each_value
     Hash_prototype.$each_value = TMP_53 = function() {
       var __context, block;
       block = TMP_53._p || nil, __context = block._s, TMP_53._p = null;
@@ -3380,6 +3552,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2470, (corelib), Hash#empty?
     Hash_prototype.$empty$p = function() {
       
       
@@ -3393,6 +3566,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$eql$p = Hash_prototype.$eq$;
 
+    // line 2482, (corelib), Hash#fetch
     Hash_prototype.$fetch = TMP_54 = function(key, defaults) {
       var __context, block;
       block = TMP_54._p || nil, __context = block._s, TMP_54._p = null;
@@ -3422,6 +3596,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2508, (corelib), Hash#flatten
     Hash_prototype.$flatten = function(level) {
       var __a, __b;
       
@@ -3452,11 +3627,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2537, (corelib), Hash#has_key?
     Hash_prototype.$has_key$p = function(key) {
       
       return !!this.map[key];
     };
 
+    // line 2541, (corelib), Hash#has_value?
     Hash_prototype.$has_value$p = function(value) {
       
       
@@ -3470,6 +3647,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2553, (corelib), Hash#hash
     Hash_prototype.$hash = function() {
       
       return this._id;
@@ -3477,6 +3655,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$include$p = Hash_prototype.$has_key$p;
 
+    // line 2559, (corelib), Hash#index
     Hash_prototype.$index = function(object) {
       
       
@@ -3492,6 +3671,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2573, (corelib), Hash#indexes
     Hash_prototype.$indexes = function(keys) {
       keys = __slice.call(arguments, 0);
       
@@ -3514,6 +3694,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$indices = Hash_prototype.$indexes;
 
+    // line 2594, (corelib), Hash#inspect
     Hash_prototype.$inspect = function() {
       
       
@@ -3529,6 +3710,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2608, (corelib), Hash#invert
     Hash_prototype.$invert = function() {
       
       
@@ -3546,6 +3728,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2624, (corelib), Hash#keep_if
     Hash_prototype.$keep_if = TMP_55 = function() {
       var __context, block;
       block = TMP_55._p || nil, __context = block._s, TMP_55._p = null;
@@ -3576,6 +3759,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$key$p = Hash_prototype.$has_key$p;
 
+    // line 2650, (corelib), Hash#keys
     Hash_prototype.$keys = function() {
       
       
@@ -3589,6 +3773,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2662, (corelib), Hash#length
     Hash_prototype.$length = function() {
       
       
@@ -3604,6 +3789,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$member$p = Hash_prototype.$has_key$p;
 
+    // line 2676, (corelib), Hash#merge
     Hash_prototype.$merge = TMP_56 = function(other) {
       var __context, block;
       block = TMP_56._p || nil, __context = block._s, TMP_56._p = null;
@@ -3644,6 +3830,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2713, (corelib), Hash#merge!
     Hash_prototype.$merge$b = TMP_57 = function(other) {
       var __context, block;
       block = TMP_57._p || nil, __context = block._s, TMP_57._p = null;
@@ -3675,6 +3862,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2741, (corelib), Hash#rassoc
     Hash_prototype.$rassoc = function(object) {
       
       
@@ -3692,6 +3880,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2757, (corelib), Hash#reject
     Hash_prototype.$reject = TMP_58 = function() {
       var __context, block;
       block = TMP_58._p || nil, __context = block._s, TMP_58._p = null;
@@ -3719,6 +3908,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2780, (corelib), Hash#replace
     Hash_prototype.$replace = function(other) {
       
       
@@ -3734,6 +3924,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2794, (corelib), Hash#select
     Hash_prototype.$select = TMP_59 = function() {
       var __context, block;
       block = TMP_59._p || nil, __context = block._s, TMP_59._p = null;
@@ -3761,6 +3952,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2817, (corelib), Hash#select!
     Hash_prototype.$select$b = TMP_60 = function() {
       var __context, block;
       block = TMP_60._p || nil, __context = block._s, TMP_60._p = null;
@@ -3789,6 +3981,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2841, (corelib), Hash#shift
     Hash_prototype.$shift = function() {
       
       
@@ -3806,6 +3999,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$size = Hash_prototype.$length;
 
+    // line 2857, (corelib), Hash#to_a
     Hash_prototype.$to_a = function() {
       
       
@@ -3822,11 +4016,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2872, (corelib), Hash#to_hash
     Hash_prototype.$to_hash = function() {
       
       return this;
     };
 
+    // line 2876, (corelib), Hash#to_json
     Hash_prototype.$to_json = function() {
       
       
@@ -3845,6 +4041,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$update = Hash_prototype.$merge$b;
 
+    // line 2893, (corelib), Hash#value?
     Hash_prototype.$value$p = function(value) {
       
       
@@ -3863,6 +4060,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Hash_prototype.$values_at = Hash_prototype.$indexes;
 
+    // line 2910, (corelib), Hash#values
     Hash_prototype.$values = function() {
       
       
@@ -3876,9 +4074,10 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return result;
     
     };
-    ;Hash._donate(["$eq$", "$aref$", "$aset$", "$assoc", "$clear", "$clone", "$default", "$default$e", "$default_proc", "$default_proc$e", "$delete", "$delete_if", "$dup", "$dup", "$each", "$each_key", "$each_pair", "$each_pair", "$each_value", "$empty$p", "$eql$p", "$eql$p", "$fetch", "$flatten", "$has_key$p", "$has_value$p", "$hash", "$include$p", "$include$p", "$index", "$indexes", "$indices", "$indices", "$inspect", "$invert", "$keep_if", "$key", "$key", "$key$p", "$key$p", "$keys", "$length", "$member$p", "$member$p", "$merge", "$merge$b", "$rassoc", "$reject", "$replace", "$select", "$select$b", "$shift", "$size", "$size", "$to_a", "$to_hash", "$to_json", "$to_s", "$to_s", "$update", "$update", "$value$p", "$values_at", "$values_at", "$values"]);    ;Hash._sdonate(["$aref$", "$allocate", "$new"]);
+    ;Hash._donate(["$eq$", "$aref$", "$aset$", "$assoc", "$clear", "$clone", "$default", "$default$e", "$default_proc", "$default_proc$e", "$delete", "$delete_if", "$dup", "$each", "$each_key", "$each_pair", "$each_value", "$empty$p", "$eql$p", "$fetch", "$flatten", "$has_key$p", "$has_value$p", "$hash", "$include$p", "$index", "$indexes", "$indices", "$inspect", "$invert", "$keep_if", "$key", "$key$p", "$keys", "$length", "$member$p", "$merge", "$merge$b", "$rassoc", "$reject", "$replace", "$select", "$select$b", "$shift", "$size", "$to_a", "$to_hash", "$to_json", "$to_s", "$update", "$value$p", "$values_at", "$values"]);    ;Hash._sdonate(["$aref$", "$allocate", "$new"]);
   })(self, null);
   (function(__base, __super){
+    // line 2923, (corelib), class String
     function String() {};
     String = __klass(__base, __super, "String", String);
     var String_prototype = String.prototype, __scope = String._scope, TMP_61, TMP_62, TMP_63, TMP_64, TMP_65;
@@ -3889,6 +4088,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String.$include(__scope.Comparable);
 
+    // line 2930, (corelib), String.try_convert
     String.$try_convert = function(what) {
       
       return (function() { try {
@@ -3900,6 +4100,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       } }).call(this)
     };
 
+    // line 2936, (corelib), String.new
     String.$new = function(str) {
       if (str == null) {
         str = ""
@@ -3907,11 +4108,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.$allocate(str.$to_s())
     };
 
+    // line 2940, (corelib), String#%
     String_prototype.$mod$ = function(data) {
       
       return this.$sprintf(this, data);
     };
 
+    // line 2944, (corelib), String#*
     String_prototype.$mul$ = function(count) {
       
       
@@ -3934,11 +4137,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2965, (corelib), String#+
     String_prototype.$plus$ = function(other) {
       
       return this + other;
     };
 
+    // line 2969, (corelib), String#<=>
     String_prototype.$cmp$ = function(other) {
       
       
@@ -3950,26 +4155,31 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 2979, (corelib), String#<
     String_prototype.$lt$ = function(other) {
       
       return this < other;
     };
 
+    // line 2983, (corelib), String#<=
     String_prototype.$le$ = function(other) {
       
       return this <= other;
     };
 
+    // line 2987, (corelib), String#>
     String_prototype.$gt$ = function(other) {
       
       return this > other;
     };
 
+    // line 2991, (corelib), String#>=
     String_prototype.$ge$ = function(other) {
       
       return this >= other;
     };
 
+    // line 2995, (corelib), String#==
     String_prototype.$eq$ = function(other) {
       
       return this == other;
@@ -3977,6 +4187,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$eqq$ = String_prototype.$eq$;
 
+    // line 3001, (corelib), String#=~
     String_prototype.$match$ = function(other) {
       
       
@@ -3988,6 +4199,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3012, (corelib), String#[]
     String_prototype.$aref$ = function(index, length) {
       
       
@@ -4015,11 +4227,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3038, (corelib), String#capitalize
     String_prototype.$capitalize = function() {
       
       return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
     };
 
+    // line 3042, (corelib), String#casecmp
     String_prototype.$casecmp = function(other) {
       
       
@@ -4034,6 +4248,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3055, (corelib), String#chars
     String_prototype.$chars = TMP_61 = function() {
       var __context, __yield;
       __yield = TMP_61._p || nil, __context = __yield._s, TMP_61._p = null;
@@ -4048,6 +4263,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3065, (corelib), String#chomp
     String_prototype.$chomp = function(separator) {
       if (separator == null) {
         separator = __gvars["/"]
@@ -4063,11 +4279,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3077, (corelib), String#chop
     String_prototype.$chop = function() {
       
       return this.substr(0, this.length - 1);
     };
 
+    // line 3081, (corelib), String#chr
     String_prototype.$chr = function() {
       
       return this.charAt(0);
@@ -4077,6 +4295,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$each_char = String_prototype.$chars;
 
+    // line 3089, (corelib), String#each_line
     String_prototype.$each_line = TMP_62 = function(separator) {
       var __context, __yield;
       __yield = TMP_62._p || nil, __context = __yield._s, TMP_62._p = null;
@@ -4095,11 +4314,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3101, (corelib), String#empty?
     String_prototype.$empty$p = function() {
       
       return this.length === 0;
     };
 
+    // line 3105, (corelib), String#end_with?
     String_prototype.$end_with$p = function(suffixes) {
       suffixes = __slice.call(arguments, 0);
       
@@ -4117,6 +4338,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$eql$p = String_prototype.$eq$;
 
+    // line 3121, (corelib), String#equal?
     String_prototype.$equal$p = function(val) {
       
       return this.toString() === val.toString();
@@ -4124,6 +4346,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$getbyte = String_prototype.charCodeAt;
 
+    // line 3127, (corelib), String#gsub
     String_prototype.$gsub = TMP_63 = function(pattern, replace) {
       var __a, __b, __context, block;
       block = TMP_63._p || nil, __context = block._s, TMP_63._p = null;
@@ -4145,16 +4368,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$hash = String_prototype.toString;
 
+    // line 3145, (corelib), String#hex
     String_prototype.$hex = function() {
       
       return this.$to_i(16);
     };
 
+    // line 3149, (corelib), String#include?
     String_prototype.$include$p = function(other) {
       
       return this.indexOf(other) !== -1;
     };
 
+    // line 3153, (corelib), String#index
     String_prototype.$index = function(what, offset) {
       var __a, __b;
       if ((__a = (__b = __scope.String.$eqq$(what), __b !== false && __b !== nil ? __b : __scope.Regexp.$eqq$(what))) === false || __a === nil) {
@@ -4192,6 +4418,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3190, (corelib), String#inspect
     String_prototype.$inspect = function() {
       
       
@@ -4217,6 +4444,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
   
     };
 
+    // line 3214, (corelib), String#intern
     String_prototype.$intern = function() {
       
       return this;
@@ -4224,11 +4452,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$lines = String_prototype.$each_line;
 
+    // line 3220, (corelib), String#length
     String_prototype.$length = function() {
       
       return this.length;
     };
 
+    // line 3224, (corelib), String#ljust
     String_prototype.$ljust = function(integer, padstr) {
       if (padstr == null) {
         padstr = " "
@@ -4236,11 +4466,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.$raise(__scope.NotImplementedError);
     };
 
+    // line 3228, (corelib), String#lstrip
     String_prototype.$lstrip = function() {
       
       return this.replace(/^\s*/, '');
     };
 
+    // line 3232, (corelib), String#match
     String_prototype.$match = TMP_64 = function(pattern, pos) {
       var __a, __b, __context, block;
       block = TMP_64._p || nil, __context = block._s, TMP_64._p = null;
@@ -4252,6 +4484,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       }; return nil; }).call(this), __a.$match._p = block.$to_proc(), __a.$match(this, pos));
     };
 
+    // line 3236, (corelib), String#next
     String_prototype.$next = function() {
       
       
@@ -4266,11 +4499,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3249, (corelib), String#ord
     String_prototype.$ord = function() {
       
       return this.charCodeAt(0);
     };
 
+    // line 3253, (corelib), String#partition
     String_prototype.$partition = function(str) {
       
       
@@ -4281,11 +4516,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3262, (corelib), String#reverse
     String_prototype.$reverse = function() {
       
       return this.split('').reverse().join('');
     };
 
+    // line 3266, (corelib), String#rstrip
     String_prototype.$rstrip = function() {
       
       return this.replace(/\s*$/, '');
@@ -4295,6 +4532,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$slice = String_prototype.$aref$;
 
+    // line 3274, (corelib), String#split
     String_prototype.$split = function(pattern, limit) {
       var __a;if (pattern == null) {
         pattern = (__a = __gvars[";"], __a !== false && __a !== nil ? __a : " ")
@@ -4302,6 +4540,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.split(pattern, limit);
     };
 
+    // line 3278, (corelib), String#start_with?
     String_prototype.$start_with$p = function(prefixes) {
       prefixes = __slice.call(arguments, 0);
       
@@ -4315,11 +4554,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3290, (corelib), String#strip
     String_prototype.$strip = function() {
       
       return this.replace(/^\s*/, '').replace(/\s*$/, '');
     };
 
+    // line 3294, (corelib), String#sub
     String_prototype.$sub = TMP_65 = function(pattern, replace) {
       var __context, block;
       block = TMP_65._p || nil, __context = block._s, TMP_65._p = null;
@@ -4359,6 +4600,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$succ = String_prototype.$next;
 
+    // line 3330, (corelib), String#sum
     String_prototype.$sum = function(n) {
       if (n == null) {
         n = 16
@@ -4374,6 +4616,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3342, (corelib), String#swapcase
     String_prototype.$swapcase = function() {
       
       
@@ -4389,6 +4632,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3356, (corelib), String#to_a
     String_prototype.$to_a = function() {
       
       
@@ -4400,6 +4644,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3366, (corelib), String#to_f
     String_prototype.$to_f = function() {
       
       
@@ -4409,6 +4654,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3374, (corelib), String#to_i
     String_prototype.$to_i = function(base) {
       if (base == null) {
         base = 10
@@ -4426,6 +4672,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     String_prototype.$to_json = String_prototype.$inspect;
 
+    // line 3388, (corelib), String#to_proc
     String_prototype.$to_proc = function() {
       
       
@@ -4442,10 +4689,11 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     String_prototype.$to_sym = String_prototype.$intern;
 
     String_prototype.$upcase = String_prototype.toUpperCase;
-    ;String._donate(["$mod$", "$mul$", "$plus$", "$cmp$", "$lt$", "$le$", "$gt$", "$ge$", "$eq$", "$eqq$", "$eqq$", "$match$", "$aref$", "$capitalize", "$casecmp", "$chars", "$chomp", "$chop", "$chr", "$downcase", "$each_char", "$each_char", "$each_line", "$empty$p", "$end_with$p", "$eql$p", "$eql$p", "$equal$p", "$getbyte", "$gsub", "$hash", "$hex", "$include$p", "$index", "$inspect", "$intern", "$lines", "$lines", "$length", "$ljust", "$lstrip", "$match", "$next", "$ord", "$partition", "$reverse", "$rstrip", "$size", "$size", "$slice", "$slice", "$split", "$start_with$p", "$strip", "$sub", "$succ", "$succ", "$sum", "$swapcase", "$to_a", "$to_f", "$to_i", "$to_json", "$to_json", "$to_proc", "$to_s", "$to_str", "$to_str", "$to_sym", "$to_sym", "$upcase"]);    ;String._sdonate(["$try_convert", "$new"]);
+    ;String._donate(["$mod$", "$mul$", "$plus$", "$cmp$", "$lt$", "$le$", "$gt$", "$ge$", "$eq$", "$eqq$", "$match$", "$aref$", "$capitalize", "$casecmp", "$chars", "$chomp", "$chop", "$chr", "$downcase", "$each_char", "$each_line", "$empty$p", "$end_with$p", "$eql$p", "$equal$p", "$getbyte", "$gsub", "$hash", "$hex", "$include$p", "$index", "$inspect", "$intern", "$lines", "$length", "$ljust", "$lstrip", "$match", "$next", "$ord", "$partition", "$reverse", "$rstrip", "$size", "$slice", "$split", "$start_with$p", "$strip", "$sub", "$succ", "$sum", "$swapcase", "$to_a", "$to_f", "$to_i", "$to_json", "$to_proc", "$to_s", "$to_str", "$to_sym", "$upcase"]);    ;String._sdonate(["$try_convert", "$new"]);
   })(self, String);
   __scope.Symbol = __scope.String;
   (function(__base, __super){
+    // line 3406, (corelib), class Numeric
     function Numeric() {};
     Numeric = __klass(__base, __super, "Numeric", Numeric);
     var Numeric_prototype = Numeric.prototype, __scope = Numeric._scope, TMP_66, TMP_67, TMP_68;
@@ -4456,101 +4704,121 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Numeric.$include(__scope.Comparable);
 
+    // line 3413, (corelib), Numeric#+
     Numeric_prototype.$plus$ = function(other) {
       
       return this + other;
     };
 
+    // line 3417, (corelib), Numeric#-
     Numeric_prototype.$minus$ = function(other) {
       
       return this - other;
     };
 
+    // line 3421, (corelib), Numeric#*
     Numeric_prototype.$mul$ = function(other) {
       
       return this * other;
     };
 
+    // line 3425, (corelib), Numeric#/
     Numeric_prototype.$div$ = function(other) {
       
       return this / other;
     };
 
+    // line 3429, (corelib), Numeric#%
     Numeric_prototype.$mod$ = function(other) {
       
       return this % other;
     };
 
+    // line 3433, (corelib), Numeric#&
     Numeric_prototype.$and$ = function(other) {
       
       return this & other;
     };
 
+    // line 3437, (corelib), Numeric#|
     Numeric_prototype.$or$ = function(other) {
       
       return this | other;
     };
 
+    // line 3441, (corelib), Numeric#^
     Numeric_prototype.$xor$ = function(other) {
       
       return this ^ other;
     };
 
+    // line 3445, (corelib), Numeric#<
     Numeric_prototype.$lt$ = function(other) {
       
       return this < other;
     };
 
+    // line 3449, (corelib), Numeric#<=
     Numeric_prototype.$le$ = function(other) {
       
       return this <= other;
     };
 
+    // line 3453, (corelib), Numeric#>
     Numeric_prototype.$gt$ = function(other) {
       
       return this > other;
     };
 
+    // line 3457, (corelib), Numeric#>=
     Numeric_prototype.$ge$ = function(other) {
       
       return this >= other;
     };
 
+    // line 3461, (corelib), Numeric#<<
     Numeric_prototype.$lshft$ = function(count) {
       
       return this << count;
     };
 
+    // line 3465, (corelib), Numeric#>>
     Numeric_prototype.$rshft$ = function(count) {
       
       return this >> count;
     };
 
+    // line 3469, (corelib), Numeric#+@
     Numeric_prototype.$uplus$ = function() {
       
       return +this;
     };
 
+    // line 3473, (corelib), Numeric#-@
     Numeric_prototype.$uminus$ = function() {
       
       return -this;
     };
 
+    // line 3477, (corelib), Numeric#~
     Numeric_prototype.$tild$ = function() {
       
       return ~this;
     };
 
+    // line 3481, (corelib), Numeric#**
     Numeric_prototype.$pow$ = function(other) {
       
       return Math.pow(this, other);
     };
 
+    // line 3485, (corelib), Numeric#==
     Numeric_prototype.$eq$ = function(other) {
       
       return this == other;
     };
 
+    // line 3489, (corelib), Numeric#<=>
     Numeric_prototype.$cmp$ = function(other) {
       
       
@@ -4562,21 +4830,25 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3499, (corelib), Numeric#abs
     Numeric_prototype.$abs = function() {
       
       return Math.abs(this);
     };
 
+    // line 3503, (corelib), Numeric#ceil
     Numeric_prototype.$ceil = function() {
       
       return Math.ceil(this);
     };
 
+    // line 3507, (corelib), Numeric#chr
     Numeric_prototype.$chr = function() {
       
       return String.fromCharCode(this);
     };
 
+    // line 3511, (corelib), Numeric#downto
     Numeric_prototype.$downto = TMP_66 = function(finish) {
       var __context, block;
       block = TMP_66._p || nil, __context = block._s, TMP_66._p = null;
@@ -4597,21 +4869,25 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Numeric_prototype.$eql$p = Numeric_prototype.$eq$;
 
+    // line 3527, (corelib), Numeric#even?
     Numeric_prototype.$even$p = function() {
       
       return this % 2 === 0;
     };
 
+    // line 3531, (corelib), Numeric#floor
     Numeric_prototype.$floor = function() {
       
       return Math.floor(this);
     };
 
+    // line 3535, (corelib), Numeric#hash
     Numeric_prototype.$hash = function() {
       
       return this.toString();
     };
 
+    // line 3539, (corelib), Numeric#integer?
     Numeric_prototype.$integer$p = function() {
       
       return this % 1 === 0;
@@ -4621,26 +4897,31 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Numeric_prototype.$modulo = Numeric_prototype.$mod$;
 
+    // line 3547, (corelib), Numeric#next
     Numeric_prototype.$next = function() {
       
       return this + 1;
     };
 
+    // line 3551, (corelib), Numeric#nonzero?
     Numeric_prototype.$nonzero$p = function() {
       
       return this.valueOf() === 0 ? nil : this;
     };
 
+    // line 3555, (corelib), Numeric#odd?
     Numeric_prototype.$odd$p = function() {
       
       return this % 2 !== 0;
     };
 
+    // line 3559, (corelib), Numeric#ord
     Numeric_prototype.$ord = function() {
       
       return this;
     };
 
+    // line 3563, (corelib), Numeric#pred
     Numeric_prototype.$pred = function() {
       
       return this - 1;
@@ -4648,6 +4929,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Numeric_prototype.$succ = Numeric_prototype.$next;
 
+    // line 3569, (corelib), Numeric#times
     Numeric_prototype.$times = TMP_67 = function() {
       var __context, block;
       block = TMP_67._p || nil, __context = block._s, TMP_67._p = null;
@@ -4666,21 +4948,25 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3583, (corelib), Numeric#to_f
     Numeric_prototype.$to_f = function() {
       
       return parseFloat(this);
     };
 
+    // line 3587, (corelib), Numeric#to_i
     Numeric_prototype.$to_i = function() {
       
       return parseInt(this);
     };
 
+    // line 3591, (corelib), Numeric#to_json
     Numeric_prototype.$to_json = function() {
       
       return this.toString();
     };
 
+    // line 3595, (corelib), Numeric#to_s
     Numeric_prototype.$to_s = function(base) {
       if (base == null) {
         base = 10
@@ -4688,6 +4974,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.toString();
     };
 
+    // line 3599, (corelib), Numeric#upto
     Numeric_prototype.$upto = TMP_68 = function(finish) {
       var __context, block;
       block = TMP_68._p || nil, __context = block._s, TMP_68._p = null;
@@ -4706,13 +4993,15 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3613, (corelib), Numeric#zero?
     Numeric_prototype.$zero$p = function() {
       
       return this == 0;
     };
-    ;Numeric._donate(["$plus$", "$minus$", "$mul$", "$div$", "$mod$", "$and$", "$or$", "$xor$", "$lt$", "$le$", "$gt$", "$ge$", "$lshft$", "$rshft$", "$uplus$", "$uminus$", "$tild$", "$pow$", "$eq$", "$cmp$", "$abs", "$ceil", "$chr", "$downto", "$eql$p", "$eql$p", "$even$p", "$floor", "$hash", "$integer$p", "$magnitude", "$magnitude", "$modulo", "$modulo", "$next", "$nonzero$p", "$odd$p", "$ord", "$pred", "$succ", "$succ", "$times", "$to_f", "$to_i", "$to_json", "$to_s", "$upto", "$zero$p"]);
+    ;Numeric._donate(["$plus$", "$minus$", "$mul$", "$div$", "$mod$", "$and$", "$or$", "$xor$", "$lt$", "$le$", "$gt$", "$ge$", "$lshft$", "$rshft$", "$uplus$", "$uminus$", "$tild$", "$pow$", "$eq$", "$cmp$", "$abs", "$ceil", "$chr", "$downto", "$eql$p", "$even$p", "$floor", "$hash", "$integer$p", "$magnitude", "$modulo", "$next", "$nonzero$p", "$odd$p", "$ord", "$pred", "$succ", "$times", "$to_f", "$to_i", "$to_json", "$to_s", "$upto", "$zero$p"]);
   })(self, Number);
   (function(__base, __super){
+    // line 3617, (corelib), class Proc
     function Proc() {};
     Proc = __klass(__base, __super, "Proc", Proc);
     var Proc_prototype = Proc.prototype, __scope = Proc._scope, TMP_69;
@@ -4721,6 +5010,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Proc_prototype._isProc = true;
   
 
+    // line 3622, (corelib), Proc.new
     Proc.$new = TMP_69 = function() {
       var __context, block;
       block = TMP_69._p || nil, __context = block._s, TMP_69._p = null;
@@ -4729,31 +5019,37 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return block;
     };
 
+    // line 3628, (corelib), Proc#to_proc
     Proc_prototype.$to_proc = function() {
       
       return this;
     };
 
+    // line 3632, (corelib), Proc#call
     Proc_prototype.$call = function(args) {
       args = __slice.call(arguments, 0);
       return this.apply(this._s, args);
     };
 
+    // line 3636, (corelib), Proc#to_proc
     Proc_prototype.$to_proc = function() {
       
       return this;
     };
 
+    // line 3640, (corelib), Proc#to_s
     Proc_prototype.$to_s = function() {
       
       return "#<Proc:0x0000000>";
     };
 
+    // line 3644, (corelib), Proc#lambda?
     Proc_prototype.$lambda$p = function() {
       
       return !!this.$lambda;
     };
 
+    // line 3648, (corelib), Proc#arity
     Proc_prototype.$arity = function() {
       
       return this.length - 1;
@@ -4761,6 +5057,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     ;Proc._donate(["$to_proc", "$call", "$to_proc", "$to_s", "$lambda$p", "$arity"]);    ;Proc._sdonate(["$new"]);
   })(self, Function);
   (function(__base, __super){
+    // line 3652, (corelib), class Range
     function Range() {};
     Range = __klass(__base, __super, "Range", Range);
     var Range_prototype = Range.prototype, __scope = Range._scope, TMP_70, TMP_71;
@@ -4780,6 +5077,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     };
   
 
+    // line 3668, (corelib), Range#initialize
     Range_prototype.$initialize = function(min, max, exclude) {
       if (exclude == null) {
         exclude = false
@@ -4789,6 +5087,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.exclude = exclude;
     };
 
+    // line 3674, (corelib), Range#==
     Range_prototype.$eq$ = function(other) {
       var __a;
       if ((__a = __scope.Range.$eqq$(other)) === false || __a === nil) {
@@ -4797,16 +5096,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return (__a = (__a = this.$exclude_end$p().$eq$(other.$exclude_end$p()) ? (this.begin).$eq$(other.$begin()) : __a), __a !== false && __a !== nil ? (this.end).$eq$(other.$end()) : __a);
     };
 
+    // line 3681, (corelib), Range#===
     Range_prototype.$eqq$ = function(obj) {
       
       return obj >= this.begin && obj <= this.end;
     };
 
+    // line 3685, (corelib), Range#begin
     Range_prototype.$begin = function() {
       
       return this.begin;
     };
 
+    // line 3689, (corelib), Range#cover?
     Range_prototype.$cover$p = function(value) {
       var __a, __b, __c;
       return (__a = (this.begin).$le$(value) ? value.$le$((function() { if ((__b = this.$exclude_end$p()) !== false && __b !== nil) {
@@ -4816,6 +5118,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       }; return nil; }).call(this)) : __a);
     };
 
+    // line 3693, (corelib), Range#each
     Range_prototype.$each = TMP_70 = function() {
       var current = nil, __a, __b, __context, __yield;
       __yield = TMP_70._p || nil, __context = __yield._s, TMP_70._p = null;
@@ -4832,11 +5135,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this;
     };
 
+    // line 3709, (corelib), Range#end
     Range_prototype.$end = function() {
       
       return this.end;
     };
 
+    // line 3713, (corelib), Range#eql?
     Range_prototype.$eql$p = function(other) {
       var __a;
       if ((__a = __scope.Range.$eqq$(other)) === false || __a === nil) {
@@ -4845,11 +5150,13 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return (__a = (__a = this.$exclude_end$p().$eq$(other.$exclude_end$p()) ? (this.begin).$eql$p(other.$begin()) : __a), __a !== false && __a !== nil ? (this.end).$eql$p(other.$end()) : __a);
     };
 
+    // line 3719, (corelib), Range#exclude_end?
     Range_prototype.$exclude_end$p = function() {
       
       return this.exclude;
     };
 
+    // line 3724, (corelib), Range#include?
     Range_prototype.$include$p = function(val) {
       
       return obj >= this.begin && obj <= this.end;
@@ -4861,6 +5168,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Range_prototype.$member$p = Range_prototype.$include$p;
 
+    // line 3734, (corelib), Range#step
     Range_prototype.$step = TMP_71 = function(n) {
       var __context, __yield;
       __yield = TMP_71._p || nil, __context = __yield._s, TMP_71._p = null;
@@ -4873,28 +5181,33 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.$raise(__scope.NotImplementedError);
     };
 
+    // line 3740, (corelib), Range#to_s
     Range_prototype.$to_s = function() {
       
       return this.begin + (this.exclude ? '...' : '..') + this.end;
     };
 
+    // line 3744, (corelib), Range#inspect
     Range_prototype.$inspect = function() {
       
       return this.begin + (this.exclude ? '...' : '..') + this.end;
     };
-    ;Range._donate(["$initialize", "$eq$", "$eqq$", "$begin", "$cover$p", "$each", "$end", "$eql$p", "$exclude_end$p", "$include$p", "$max", "$max", "$min", "$min", "$member$p", "$member$p", "$step", "$to_s", "$inspect"]);
+    ;Range._donate(["$initialize", "$eq$", "$eqq$", "$begin", "$cover$p", "$each", "$end", "$eql$p", "$exclude_end$p", "$include$p", "$max", "$min", "$member$p", "$step", "$to_s", "$inspect"]);
   })(self, null);
   (function(__base, __super){
+    // line 3748, (corelib), class Exception
     function Exception() {};
     Exception = __klass(__base, __super, "Exception", Exception);
     var Exception_prototype = Exception.prototype, __scope = Exception._scope;
     Exception_prototype.message = nil;
 
+    // line 3749, (corelib), Exception#message
     Exception_prototype.$message = function() {
       
       return this.message
     };
 
+    // line 3751, (corelib), Exception#initialize
     Exception_prototype.$initialize = function(message) {
       if (message == null) {
         message = ""
@@ -4902,6 +5215,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.message = message;
     };
 
+    // line 3755, (corelib), Exception#backtrace
     Exception_prototype.$backtrace = function() {
       
       
@@ -4918,13 +5232,14 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3770, (corelib), Exception#inspect
     Exception_prototype.$inspect = function() {
       
       return "#<" + this.$class() + ": '" + this.$message() + "'>";
     };
 
     Exception_prototype.$to_s = Exception_prototype.$message;
-    ;Exception._donate(["$message", "$initialize", "$backtrace", "$inspect", "$to_s", "$to_s"]);
+    ;Exception._donate(["$message", "$initialize", "$backtrace", "$inspect", "$to_s"]);
   })(self, Error);
   __scope.StandardError = __scope.Exception;
   __scope.RuntimeError = __scope.Exception;
@@ -4937,40 +5252,47 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
   __scope.KeyError = __scope.Exception;
   __scope.RangeError = __scope.Exception;
   (function(__base, __super){
+    // line 3787, (corelib), class Regexp
     function Regexp() {};
     Regexp = __klass(__base, __super, "Regexp", Regexp);
     var Regexp_prototype = Regexp.prototype, __scope = Regexp._scope;
 
+    // line 3788, (corelib), Regexp.escape
     Regexp.$escape = function(string) {
       
       return string.replace(/([.*+?^=!:${}()|[]\/\])/g, '\$1');
     };
 
+    // line 3792, (corelib), Regexp.new
     Regexp.$new = function(string, options) {
       
       return new RegExp(string, options);
     };
 
+    // line 3796, (corelib), Regexp#==
     Regexp_prototype.$eq$ = function(other) {
       
       return other.constructor == RegExp && this.toString() === other.toString();
     };
 
+    // line 3800, (corelib), Regexp#===
     Regexp_prototype.$eqq$ = function(obj) {
       
       return this.test(obj);
     };
 
+    // line 3804, (corelib), Regexp#=~
     Regexp_prototype.$match$ = function(string) {
       
       
       var result = this.exec(string);
 
       if (result) {
-        var match       = new __scope.MatchData;
-            match.$data = result;
+        result.$to_s    = match_to_s;
+        result.$inspect = match_inspect;
+        result._real    = result._klass = __scope.MatchData;
 
-        __gvars["~"] = match;
+        __gvars["~"] = result;
       }
       else {
         __gvars["~"] = nil;
@@ -4982,21 +5304,24 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Regexp_prototype.$eql$p = Regexp_prototype.$eq$;
 
+    // line 3825, (corelib), Regexp#inspect
     Regexp_prototype.$inspect = function() {
       
       return this.toString();
     };
 
+    // line 3829, (corelib), Regexp#match
     Regexp_prototype.$match = function(pattern) {
       
       
       var result  = this.exec(pattern);
 
       if (result) {
-        var match   = new __scope.MatchData;
-        match.$data = result;
+        result.$to_s    = match_to_s;
+        result.$inspect = match_inspect;
+        result._real    = result._klass = __scope.MatchData;
 
-        return __gvars["~"] = match;
+        return __gvars["~"] = result;
       }
       else {
         return __gvars["~"] = nil;
@@ -5004,64 +5329,41 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3846, (corelib), Regexp#to_s
     Regexp_prototype.$to_s = function() {
       
       return this.source;
     };
-    ;Regexp._donate(["$eq$", "$eqq$", "$match$", "$eql$p", "$eql$p", "$inspect", "$match", "$to_s"]);    ;Regexp._sdonate(["$escape", "$new"]);
+
+    
+    function match_inspect() {
+      return "<#MatchData " + this[0].$inspect() + ">";
+    }
+
+    function match_to_s() {
+      return this[0];
+    }
+  
+    ;Regexp._donate(["$eq$", "$eqq$", "$match$", "$eql$p", "$inspect", "$match", "$to_s"]);    ;Regexp._sdonate(["$escape", "$new"]);
   })(self, RegExp);
   (function(__base, __super){
+    // line 3861, (corelib), class MatchData
     function MatchData() {};
     MatchData = __klass(__base, __super, "MatchData", MatchData);
     var MatchData_prototype = MatchData.prototype, __scope = MatchData._scope;
 
-    MatchData_prototype.$aref$ = function(index) {
-      
-      
-      var length = this.$data.length;
+    nil
 
-      if (index < 0) {
-        index += length;
-      }
-
-      if (index >= length || index < 0) {
-        return nil;
-      }
-
-      return this.$data[index];
-    
-    };
-
-    MatchData_prototype.$length = function() {
-      
-      return this.$data.length;
-    };
-
-    MatchData_prototype.$inspect = function() {
-      
-      return "#<MatchData " + (this[0]).$inspect() + ">";
-    };
-
-    MatchData_prototype.$size = MatchData_prototype.$length;
-
-    MatchData_prototype.$to_a = function() {
-      
-      return __slice.call(this.$data);
-    };
-
-    MatchData_prototype.$to_s = function() {
-      
-      return this.$data[0];
-    };
-    ;MatchData._donate(["$aref$", "$length", "$inspect", "$size", "$size", "$to_a", "$to_s"]);
   })(self, null);
   (function(__base, __super){
+    // line 3863, (corelib), class Time
     function Time() {};
     Time = __klass(__base, __super, "Time", Time);
     var Time_prototype = Time.prototype, __scope = Time._scope;
 
     Time.$include(__scope.Comparable);
 
+    // line 3866, (corelib), Time.at
     Time.$at = function(seconds, frac) {
       if (frac == null) {
         frac = 0
@@ -5069,6 +5371,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       return this.$allocate(seconds * 1000 + frac)
     };
 
+    // line 3870, (corelib), Time.new
     Time.$new = function(year, month, day, hour, minute, second, millisecond) {
       
       
@@ -5093,41 +5396,49 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     
     };
 
+    // line 3893, (corelib), Time.now
     Time.$now = function() {
       
       return this.$allocate()
     };
 
+    // line 3897, (corelib), Time#+
     Time_prototype.$plus$ = function(other) {
       var __a, __b;
       return __scope.Time.$allocate((__a = this.$to_f(), __b = other.$to_f(), typeof(__a) === 'number' ? __a + __b : __a.$plus$(__b)));
     };
 
+    // line 3901, (corelib), Time#-
     Time_prototype.$minus$ = function(other) {
       var __a, __b;
       return __scope.Time.$allocate((__a = this.$to_f(), __b = other.$to_f(), typeof(__a) === 'number' ? __a - __b : __a.$minus$(__b)));
     };
 
+    // line 3905, (corelib), Time#<=>
     Time_prototype.$cmp$ = function(other) {
       
       return this.$to_f().$cmp$(other.$to_f());
     };
 
+    // line 3909, (corelib), Time#day
     Time_prototype.$day = function() {
       
       return this.getDate();
     };
 
+    // line 3913, (corelib), Time#eql?
     Time_prototype.$eql$p = function(other) {
       var __a;
       return (__a = other.$is_a$p(__scope.Time), __a !== false && __a !== nil ? this.$cmp$(other).$zero$p() : __a);
     };
 
+    // line 3917, (corelib), Time#friday?
     Time_prototype.$friday$p = function() {
       
       return this.getDay() === 5;
     };
 
+    // line 3921, (corelib), Time#hour
     Time_prototype.$hour = function() {
       
       return this.getHours();
@@ -5135,16 +5446,19 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Time_prototype.$mday = Time_prototype.$day;
 
+    // line 3927, (corelib), Time#min
     Time_prototype.$min = function() {
       
       return this.getMinutes();
     };
 
+    // line 3931, (corelib), Time#mon
     Time_prototype.$mon = function() {
       
       return this.getMonth() + 1;
     };
 
+    // line 3935, (corelib), Time#monday?
     Time_prototype.$monday$p = function() {
       
       return this.getDay() === 1;
@@ -5152,67 +5466,79 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Time_prototype.$month = Time_prototype.$mon;
 
+    // line 3941, (corelib), Time#saturday?
     Time_prototype.$saturday$p = function() {
       
       return this.getDay() === 6;
     };
 
+    // line 3945, (corelib), Time#sec
     Time_prototype.$sec = function() {
       
       return this.getSeconds();
     };
 
+    // line 3949, (corelib), Time#sunday?
     Time_prototype.$sunday$p = function() {
       
       return this.getDay() === 0;
     };
 
+    // line 3953, (corelib), Time#thursday?
     Time_prototype.$thursday$p = function() {
       
       return this.getDay() === 4;
     };
 
+    // line 3957, (corelib), Time#to_f
     Time_prototype.$to_f = function() {
       
       return this.getTime() / 1000;
     };
 
+    // line 3961, (corelib), Time#to_i
     Time_prototype.$to_i = function() {
       
       return parseInt(this.getTime() / 1000);
     };
 
+    // line 3965, (corelib), Time#tuesday?
     Time_prototype.$tuesday$p = function() {
       
       return this.getDay() === 2;
     };
 
+    // line 3969, (corelib), Time#wday
     Time_prototype.$wday = function() {
       
       return this.getDay();
     };
 
+    // line 3973, (corelib), Time#wednesday?
     Time_prototype.$wednesday$p = function() {
       
       return this.getDay() === 3;
     };
 
+    // line 3977, (corelib), Time#year
     Time_prototype.$year = function() {
       
       return this.getFullYear();
     };
-    ;Time._donate(["$plus$", "$minus$", "$cmp$", "$day", "$eql$p", "$friday$p", "$hour", "$mday", "$mday", "$min", "$mon", "$monday$p", "$month", "$month", "$saturday$p", "$sec", "$sunday$p", "$thursday$p", "$to_f", "$to_i", "$tuesday$p", "$wday", "$wednesday$p", "$year"]);    ;Time._sdonate(["$at", "$new", "$now"]);
+    ;Time._donate(["$plus$", "$minus$", "$cmp$", "$day", "$eql$p", "$friday$p", "$hour", "$mday", "$min", "$mon", "$monday$p", "$month", "$saturday$p", "$sec", "$sunday$p", "$thursday$p", "$to_f", "$to_i", "$tuesday$p", "$wday", "$wednesday$p", "$year"]);    ;Time._sdonate(["$at", "$new", "$now"]);
   })(self, Date);
   (function(__base, __super){
+    // line 3981, (corelib), class Struct
     function Struct() {};
     Struct = __klass(__base, __super, "Struct", Struct);
     var Struct_prototype = Struct.prototype, __scope = Struct._scope, TMP_72, TMP_73, TMP_74;
     Struct_prototype.members = nil;
 
+    // line 3982, (corelib), Struct.new
     Struct.$new = TMP_72 = function(name, args) {
       var __a, __b;args = __slice.call(arguments, 1);
       if ((__a = this.$eq$(__scope.Struct)) === false || __a === nil) {
-        return __class._super._proto.$new.apply(this, __slice.call(arguments))
+        return Struct._super.$new.apply(this, __slice.call(arguments))
       };
       if (name.$aref$(0).$eq$(name.$aref$(0).$upcase())) {
         return __scope.Struct.$const_set(name, this.$new.apply(this, [].concat(args)))
@@ -5233,6 +5559,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       };
     };
 
+    // line 3996, (corelib), Struct.define_struct_attribute
     Struct.$define_struct_attribute = function(name) {
       var __a, __b;
       if (this.$eq$(__scope.Struct)) {
@@ -5254,6 +5581,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       }, __a._s = this, __a), __b.$define_method("" + name + "="));
     };
 
+    // line 4012, (corelib), Struct.members
     Struct.$members = function() {
       var __a;
       if (this.$eq$(__scope.Struct)) {
@@ -5264,6 +5592,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
 
     Struct.$include(__scope.Enumerable);
 
+    // line 4022, (corelib), Struct#initialize
     Struct_prototype.$initialize = function(args) {
       var __a, __b;args = __slice.call(arguments, 0);
       return (__b = this.$members(), __b.$each_with_index._p = (__a = function(name, index) {
@@ -5276,11 +5605,13 @@ if (index == null) index = nil;
       }, __a._s = this, __a), __b.$each_with_index());
     };
 
+    // line 4028, (corelib), Struct#members
     Struct_prototype.$members = function() {
       
       return this.$class().$members();
     };
 
+    // line 4032, (corelib), Struct#[]
     Struct_prototype.$aref$ = function(name) {
       var __a;
       if ((__a = __scope.Integer.$eqq$(name)) !== false && __a !== nil) {
@@ -5296,6 +5627,7 @@ if (index == null) index = nil;
       return this.$instance_variable_get("@" + name);
     };
 
+    // line 4044, (corelib), Struct#[]=
     Struct_prototype.$aset$ = function(name, value) {
       var __a;
       if ((__a = __scope.Integer.$eqq$(name)) !== false && __a !== nil) {
@@ -5311,6 +5643,7 @@ if (index == null) index = nil;
       return this.$instance_variable_set("@" + name, value);
     };
 
+    // line 4056, (corelib), Struct#each
     Struct_prototype.$each = TMP_73 = function() {
       var __a, __b, __context, __yield;
       __yield = TMP_73._p || nil, __context = __yield._s, TMP_73._p = null;
@@ -5320,13 +5653,14 @@ if (index == null) index = nil;
       };
       return (__b = this.$members(), __b.$each._p = (__a = function(name) {
 
-        
+        var __a;
         if (name == null) name = nil;
 
-        return __yield.call(__context, this.$aref$(name))
+        return __a = __yield.call(__context, this.$aref$(name)), __a === __breaker ? __breaker.$v : __a
       }, __a._s = this, __a), __b.$each());
     };
 
+    // line 4062, (corelib), Struct#each_pair
     Struct_prototype.$each_pair = TMP_74 = function() {
       var __a, __b, __context, __yield;
       __yield = TMP_74._p || nil, __context = __yield._s, TMP_74._p = null;
@@ -5336,13 +5670,14 @@ if (index == null) index = nil;
       };
       return (__b = this.$members(), __b.$each._p = (__a = function(name) {
 
-        
+        var __a;
         if (name == null) name = nil;
 
-        return __yield.call(__context, name, this.$aref$(name))
+        return __a = __yield.call(__context, name, this.$aref$(name)), __a === __breaker ? __breaker.$v : __a
       }, __a._s = this, __a), __b.$each());
     };
 
+    // line 4068, (corelib), Struct#eql?
     Struct_prototype.$eql$p = function(other) {
       var __a, __b, __c;
       return (__a = this.$hash().$eq$(other.$hash()) ? __a : (__c = other.$each_with_index(), __c.$all$p._p = (__b = function(object, index) {
@@ -5355,6 +5690,7 @@ if (index == null) index = nil;
       }, __b._s = this, __b), __c.$all$p()));
     };
 
+    // line 4074, (corelib), Struct#length
     Struct_prototype.$length = function() {
       
       return this.$members().$length();
@@ -5362,6 +5698,7 @@ if (index == null) index = nil;
 
     Struct_prototype.$size = Struct_prototype.$length;
 
+    // line 4080, (corelib), Struct#to_a
     Struct_prototype.$to_a = function() {
       var __a, __b;
       return (__b = this.$members(), __b.$map._p = (__a = function(name) {
@@ -5374,44 +5711,16 @@ if (index == null) index = nil;
     };
 
     Struct_prototype.$values = Struct_prototype.$to_a;
-    ;Struct._donate(["$initialize", "$members", "$aref$", "$aset$", "$each", "$each_pair", "$eql$p", "$length", "$size", "$size", "$to_a", "$values", "$values"]);    ;Struct._sdonate(["$new", "$define_struct_attribute", "$members"]);
+    ;Struct._donate(["$initialize", "$members", "$aref$", "$aset$", "$each", "$each_pair", "$eql$p", "$length", "$size", "$to_a", "$values"]);    ;Struct._sdonate(["$new", "$define_struct_attribute", "$members"]);
   })(self, null);
-  
-  var json_parse;
-  var cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-
-  if (typeof JSON !== 'undefined') {
-    json_parse = JSON.parse;
-  }
-  else {
-    var evaluator = window.eval;
-    json_parse = function(text) {
-      text = String(text);
-      cx.lastIndex = 0;
-
-      if (cx.test(text)) {
-        text = text.replace(cx, function(a) {
-          return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-        });
-      }
-
-      if (/^[\],:{}\s]*$/
-                  .test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
-                      .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
-                      .replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
-
-              return evaluator('(' + text + ')');
-      }
-
-      throw new Error("JSON.parse");
-    };
-  }
-
+  var json_parse = JSON.parse;
   return (function(__base){
+    // line 4089, (corelib), module JSON
     function JSON() {};
     JSON = __module(__base, "JSON", JSON);
     var JSON_prototype = JSON.prototype, __scope = JSON._scope;
 
+    // line 4090, (corelib), JSON.parse
     JSON.$parse = function(source) {
       
       return to_opal(json_parse(source));
@@ -5435,7 +5744,7 @@ if (index == null) index = nil;
         case 'object':
           if (!value) return nil;
 
-          if (Object.prototype.toString.apply(value) === '[object Array]') {
+          if (value._isArray) {
             var arr = [];
 
             for (var i = 0, ii = value.length; i < ii; i++) {
