@@ -1,7 +1,7 @@
-describe "DOM#id" do
+describe "Element#id" do
   before do
-    @div = DOM <<-HTML
-      <div id="DOM-id-spec">
+    @div = Element <<-HTML
+      <div id="Element-id-spec">
         <div id="foo"></div>
         <div id="bar"></div>
       </div>
@@ -14,8 +14,8 @@ describe "DOM#id" do
     @div.remove
   end
 
-  it "should return the DOM's id" do
-    DOM('#foo').id.should == 'foo'
-    DOM('#bar').id.should == 'bar'
+  it "should return the Element's id" do
+    Element('#foo').id.should == 'foo'
+    Element('#bar').id.should == 'bar'
   end
 end

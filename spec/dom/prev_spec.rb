@@ -1,6 +1,6 @@
-describe "DOM#prev" do
+describe "Element#prev" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="prev-spec">
         <div id="foo"></div>
         <div id="bar"></div>
@@ -15,10 +15,10 @@ describe "DOM#prev" do
   end
 
   it "should return the prev sibling" do
-    DOM('#bar').prev.id.should == 'foo'
+    Element('#bar').prev.id.should == 'foo'
   end
 
-  it "should return nil when no prev DOM" do
-    DOM('#foo').prev.should be_nil
+  it "should return nil when no prev Element" do
+    Element('#foo').prev.should be_nil
   end
 end

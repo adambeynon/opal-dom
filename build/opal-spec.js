@@ -41,11 +41,11 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         if ((__a = __scope.Document.$body_ready$p()) === false || __a === nil) {
           this.$raise("Not running in browser")
         };
-        this.summary_element = __scope.DOM.$parse("<p class=\"summary\"></p>");
+        this.summary_element = this.$Element("<p class=\"summary\"></p>");
         this.summary_element.$append_to_body();
-        this.groups_element = __scope.DOM.$parse("<ul class=\"example_groups\"></ul>");
+        this.groups_element = this.$Element("<ul class=\"example_groups\"></ul>");
         this.groups_element.$append_to_body();
-        return __scope.DOM.$parse("<style>" + __scope.CSS + "</style>").$append_to_head();
+        return this.$Element("<style>" + __scope.CSS + "</style>").$append_to_head();
       };
 
       // line 69, lib/opal/spec/browser_formatter.rb, BrowserFormatter#finish
@@ -60,8 +60,8 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         
         this.example_group = group;
         this.example_group_failed = false;
-        this.group_element = __scope.DOM.$parse("        <li>\n          <span class=\"group_description\">\n            " + group.$description() + "\n          </span>\n        </li>\n      ");
-        this.example_list = __scope.DOM.$parse("        <ul class=\"examples\"></ul>\n      ");
+        this.group_element = this.$Element("        <li>\n          <span class=\"group_description\">\n            " + group.$description() + "\n          </span>\n        </li>\n      ");
+        this.example_list = this.$Element("        <ul class=\"examples\"></ul>\n      ");
         this.group_element.$lshft$(this.example_list);
         return this.groups_element.$lshft$(this.group_element);
       };
@@ -94,9 +94,9 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         }
         else {output = "" + exception.$class() + ": " + exception.$message() + "\n";
         output = output.$plus$("    " + exception.$backtrace().$join("\n    ") + "\n");};
-        wrapper = __scope.DOM.$parse("<li class=\"example failed\"></li>");
-        description = __scope.DOM.$parse("        <span class=\"example_description\">" + example.$description() + "</span>\n      ");
-        exception = __scope.DOM.$parse("        <pre class=\"exception\">" + output + "</pre>\n      ");
+        wrapper = this.$Element("<li class=\"example failed\"></li>");
+        description = this.$Element("        <span class=\"example_description\">" + example.$description() + "</span>\n      ");
+        exception = this.$Element("        <pre class=\"exception\">" + output + "</pre>\n      ");
         wrapper.$lshft$(description);
         wrapper.$lshft$(exception);
         this.example_list.$append(wrapper);
@@ -106,7 +106,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
       // line 138, lib/opal/spec/browser_formatter.rb, BrowserFormatter#example_passed
       BrowserFormatter_prototype.$example_passed = function(example) {
         var out = nil;
-        out = __scope.DOM.$parse("        <li class=\"example passed\">\n          <span class=\"example_description\">" + example.$description() + "</span>\n        </li>\n      ");
+        out = this.$Element("        <li class=\"example passed\">\n          <span class=\"example_description\">" + example.$description() + "</span>\n        </li>\n      ");
         return this.example_list.$append(out);
       };
 
@@ -798,7 +798,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Spec = __module(__base, "Spec", Spec);
     var Spec_prototype = Spec.prototype, __scope = Spec._scope;
 
-    __scope.VERSION = "0.1.9"
+    __scope.VERSION = "0.1.10"
     
   })(self)
 })();

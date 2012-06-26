@@ -1,6 +1,6 @@
-describe "DOM#inspect" do
+describe "Element#inspect" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="inspect-spec">
         <div id="foo"></div>
         <div class="bar"></div>
@@ -15,12 +15,8 @@ describe "DOM#inspect" do
     @div.remove
   end
 
-  it "should return a string representation of the elements" do
-    DOM('#foo').inspect.should == '(<div id="foo">)'
-    DOM('.bar').inspect.should == '(<div class="bar">, <p id="lol" class="bar">)'
-  end
-
-  it "returns '()' when called on an empty collection" do
-    DOM('.empty-collection').inspect.should == "()"
+  it "should return a string representation of the element" do
+    Element('#foo').inspect.should == '<div id="foo">'
+    Element('#lol').inspect.should == '<p id="lol" class="bar">'
   end
 end

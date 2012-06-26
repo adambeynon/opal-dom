@@ -5,12 +5,12 @@ module Kernel
   # @example
   #
   #   # returning single elements by id (or nil if they don't exist)
-  #   DOM('#foo')       # => <div id="foo">
-  #   DOM('#bar')       # => nil
+  #   Element('#foo')       # => <div id="foo">
+  #   Element('#bar')       # => nil
   #
   # @param [String] selector id or css selector to find
-  # @return [DOM, nil] found element or nil
-  def DOM(selector)
+  # @return [Element, nil] found element or nil
+  def Element(selector)
     %x{
       var el
 
@@ -18,19 +18,17 @@ module Kernel
         el = document.getElementById(selector.substr(1));
 
         if (el) {
-          return #{ DOM.new `el` };
+          return #{ Element.new `el` };
         }
         else {
-          var res = #{ DOM.allocate };
-          res.length = 0;
-          return res;
+          return nil;
         }
       }
       else if (/\\s*</.test(selector)) {
-        return #{ DOM.parse selector };
+        return #{ Element.parse selector };
       } 
       else {
-        var el = document.querySelectorAll(selector), res = #{ DOM.allocate };
+        var el = document.querySelectorAll(selector), res = #{ Element.allocate };
 
         for (var i = 0, length = el.length; i < length; i++) {
           res[i] = el[i];

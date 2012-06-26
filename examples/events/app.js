@@ -6,14 +6,14 @@ var __a, __b;
     var count = nil, __a, __b;
     
     count = 0;
-    (__b = this.$DOM("#target"), __b.$on._p = (__a = function() {
+    (__b = this.$Element("#target"), __b.$on._p = (__a = function() {
 
       
       
       count = count.$plus$(1);
-      return this.$DOM("#count").$html$e("Click count: " + count);
+      return this.$Element("#count").$html$e("Click count: " + count);
     }, __a._s = this, __a), __b.$on("click"));
-    (__b = this.$DOM("#default"), __b.$on._p = (__a = function(e) {
+    (__b = this.$Element("#default"), __b.$on._p = (__a = function(e) {
 
       
       if (e == null) e = nil;
@@ -21,7 +21,7 @@ var __a, __b;
       e.$stop();
       return this.$alert("event should be stopped");
     }, __a._s = this, __a), __b.$on("click"));
-    return (__b = this.$DOM("#key-clicks"), __b.$on._p = (__a = function(e) {
+    return (__b = this.$Element("#key-clicks"), __b.$on._p = (__a = function(e) {
 
       var str = nil, __a;
       if (e == null) e = nil;
@@ -40,7 +40,7 @@ var __a, __b;
         str.$lshft$("meta")
       };
       e.$stop();
-      return this.$DOM("#key-clicks-out").$html$e(str.$join(", "));
+      return this.$Element("#key-clicks-out").$html$e(str.$join(", "));
     }, __a._s = this, __a), __b.$on("click"));
   }, __a._s = self, __a), __b.$ready$p())
 })();

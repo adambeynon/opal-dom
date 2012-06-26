@@ -1,6 +1,6 @@
-describe "DOM#add_class" do
+describe "Element#add_class" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="add-class-spec">
         <div id="foo" class="apples"></div>
         <div id="bar"></div>
@@ -20,19 +20,19 @@ describe "DOM#add_class" do
   end
 
   it "should add the given classname onto the element" do
-    foo = DOM('#foo')
+    foo = Element('#foo')
     foo.class_name.should == 'apples'
     foo.add_class 'oranges'
     foo.class_name.should == 'apples oranges'
 
-    bar = DOM('#bar')
+    bar = Element('#bar')
     bar.class_name.should == ''
     bar.add_class 'pineapples'
     bar.class_name.should == 'pineapples'
   end
 
   it "should not add the classname if the element already has it" do
-    baz = DOM '#baz'
+    baz = Element '#baz'
     baz.add_class 'lemons'
     baz.class_name.should == 'lemons bananas'
 
@@ -42,7 +42,7 @@ describe "DOM#add_class" do
     baz.add_class 'grapes'
     baz.class_name.should == 'lemons bananas grapes'
 
-    buz = DOM '#buz'
+    buz = Element '#buz'
     buz.add_class 'mangos'
     buz.class_name.should == 'mangos'
 
@@ -51,17 +51,7 @@ describe "DOM#add_class" do
   end
 
   it "should return self" do
-    spec = DOM '#add-class-spec'
+    spec = Element '#add-class-spec'
     spec.add_class('wow').should == spec
-  end
-
-  it "should add the class name to each element in the collection" do
-    pies = DOM '.pie'
-    pies.size.should == 2
-
-    pies.add_class 'eaten'
-
-    DOM('#lunch').has_class?('eaten').should be_true
-    DOM('#dinner').has_class?('eaten').should be_true
   end
 end

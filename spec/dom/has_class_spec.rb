@@ -1,6 +1,6 @@
-describe "DOM#has_class?" do
+describe "Element#has_class?" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="has-class-spec">
         <div id="foo" class="apples"></div>
         <div id="bar" class="lemons bananas"></div>
@@ -19,13 +19,9 @@ describe "DOM#has_class?" do
     @div.remove
   end
 
-  it "should return true if the DOM has the given class" do
-    DOM('#foo').has_class?('apples').should be_true
-    DOM('#foo').has_class?('oranges').should be_false
-    DOM('#bar').has_class?('lemons').should be_true
-  end
-
-  it "should return true if any of the elements have the given class" do
-    DOM('.tom').has_class?('arthur').should be_true
+  it "should return true if the Element has the given class" do
+    Element('#foo').has_class?('apples').should be_true
+    Element('#foo').has_class?('oranges').should be_false
+    Element('#bar').has_class?('lemons').should be_true
   end
 end

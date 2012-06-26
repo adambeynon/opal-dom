@@ -1,6 +1,6 @@
-describe "DOM#next" do
+describe "Element#next" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="next-spec">
         <div id="foo"></div>
         <div id="bar"></div>
@@ -15,10 +15,10 @@ describe "DOM#next" do
   end
 
   it "should return the next sibling" do
-    DOM('#foo').next.id.should == 'bar'
+    Element('#foo').next.id.should == 'bar'
   end
 
-  it "should return nil when no next DOM" do
-    DOM('#bar').next.should be_nil
+  it "should return nil when no next Element" do
+    Element('#bar').next.should be_nil
   end
 end

@@ -1,6 +1,6 @@
-describe "DOM#remove_class" do
+describe "Element#remove_class" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="remove-class-spec">
         <div id="foo"></div>
 
@@ -19,26 +19,26 @@ describe "DOM#remove_class" do
     @div.remove
   end
 
-  it "should have no effect on DOMs without class" do
-    foo = DOM '#foo'
+  it "should have no effect on Elements without class" do
+    foo = Element '#foo'
     foo.class_name.should == ''
     foo.remove_class 'blah'
     foo.class_name.should == ''
   end
 
-  it "should remove the given class from the DOM" do
-    bar = DOM '#bar'
+  it "should remove the given class from the Element" do
+    bar = Element '#bar'
     bar.remove_class 'lemons'
     bar.class_name.should == ''
 
-    baz = DOM '#baz'
+    baz = Element '#baz'
     baz.remove_class 'lemons'
     baz.class_name.should == 'apples oranges'
 
     baz.remove_class 'apples'
     baz.class_name.should == 'oranges'
 
-    buz = DOM '#buz'
+    buz = Element '#buz'
     buz.remove_class 'mangos'
     buz.class_name.should == 'pineapples'
 

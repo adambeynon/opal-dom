@@ -1,6 +1,6 @@
-describe "DOM#class_name" do
+describe "Element#class_name" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="class-name-spec">
         <div id="foo" class="whiskey"></div>
         <div id="bar" class="scotch brandy"></div>
@@ -19,28 +19,20 @@ describe "DOM#class_name" do
     @div.remove
   end
 
-  it "should return the DOMs' classname" do
-    DOM('#foo').class_name.should == 'whiskey'
-    DOM('#bar').class_name.should == 'scotch brandy'
+  it "should return the Elements' classname" do
+    Element('#foo').class_name.should == 'whiskey'
+    Element('#bar').class_name.should == 'scotch brandy'
   end
 
-  it "should return an empty string for DOMs with no classname" do
-    DOM('#baz').class_name.should == ''
-    DOM('#buz').class_name.should == ''
-  end
-
-  it "should return classname of first element if length > 1" do
-    DOM('.red').class_name.should == 'red dark'
-  end
-
-  it "should return an empty string when length == 0" do
-    DOM('.no-elements').class_name.should == ''
+  it "should return an empty string for Elements with no classname" do
+    Element('#baz').class_name.should == ''
+    Element('#buz').class_name.should == ''
   end
 end
 
-describe "DOM#class_name=" do
+describe "Element#class_name=" do
   before do
-    @div = DOM <<-HTML
+    @div = Element <<-HTML
       <div id="set-class-name-spec">
         <div id="foo" class=""></div>
         <div id="bar" class="oranges"></div>
@@ -57,26 +49,16 @@ describe "DOM#class_name=" do
     @div.remove
   end
 
-  it "should set the given class name on the DOM" do
-    DOM('#foo').class_name = 'apples'
-    DOM('#foo').class_name.should == 'apples'
+  it "should set the given class name on the Element" do
+    Element('#foo').class_name = 'apples'
+    Element('#foo').class_name.should == 'apples'
   end
 
   it "should replace any existing classname" do
-    bar = DOM '#bar'
+    bar = Element '#bar'
     bar.class_name.should == 'oranges'
 
     bar.class_name = 'lemons'
     bar.class_name.should == 'lemons'
-  end
-
-  it "should set the classname on all elements in instance" do
-    el = DOM '.banana'
-    el.size.should == 2
-
-    el.class_name = 'pop'
-
-    DOM('#baz').class_name.should == 'pop'
-    DOM('#buz').class_name.should == 'pop'
   end
 end
