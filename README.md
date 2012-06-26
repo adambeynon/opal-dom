@@ -1,10 +1,8 @@
 opal-dom: Pure DOM library for Opal
 ===================================
 
-opal-dom is based around the `Element` class which wraps a native dom
-element, and the `ElementSet` class that contains 0 or more `Element`
-instances. `ElementSet` can be used to perform "mass" operations on
-collections of DOM elements.
+opal-dom is based around the `DOM` class which wraps a native dom
+element.
 
 ## Finding Elements
 
@@ -16,14 +14,14 @@ Assuming the HTML:
 ```
 
 ```ruby
-Element('#foo')
+DOM('#foo')
 # => <div id="foo">
 
-Element('#bleh')
+DOM('#bleh')
 # => nil
 
-Element('#bar').class
-# => Element
+DOM('#bar').class
+# => DOM
 ```
 
 ## CSS Classes
@@ -33,7 +31,7 @@ Element('#bar').class
 ```
 
 ```ruby
-foo = Element '#foo'
+foo = DOM '#foo'
 
 foo.class_name
 # => 'apples'

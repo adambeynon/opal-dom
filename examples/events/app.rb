@@ -2,19 +2,19 @@ Document.ready? do
   # Simple event binding test
   count  = 0
 
-  Element('#target').click do
+  DOM('#target').on :click do
     count += 1
-    Element('#count').html = "Click count: #{count}"
+    DOM('#count').html = "Click count: #{count}"
   end
 
   # Preventing default
-  Element('#default').click do |e|
+  DOM('#default').on :click do |e|
     e.stop
     alert "event should be stopped"
   end
 
   # Key clicks (shift, ctrl, alt, meta)
-  Element('#key-clicks').click do |e|
+  DOM('#key-clicks').on :click do |e|
     str = []
     str << 'shift' if e.shift?
     str << 'ctrl'  if e.ctrl?

@@ -61,7 +61,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
         this.example_group = group;
         this.example_group_failed = false;
         this.group_element = __scope.DOM.$parse("        <li>\n          <span class=\"group_description\">\n            " + group.$description() + "\n          </span>\n        </li>\n      ");
-        this.example_list = __scope.DOM.$parse("        <ul class=\"examples\" style=\"display:none;\"></ul>\n      ");
+        this.example_list = __scope.DOM.$parse("        <ul class=\"examples\"></ul>\n      ");
         this.group_element.$lshft$(this.example_list);
         return this.groups_element.$lshft$(this.group_element);
       };
@@ -798,7 +798,7 @@ var __opal = Opal, self = __opal.top, __scope = __opal, nil = __opal.nil, __brea
     Spec = __module(__base, "Spec", Spec);
     var Spec_prototype = Spec.prototype, __scope = Spec._scope;
 
-    __scope.VERSION = "0.1.7"
+    __scope.VERSION = "0.1.9"
     
   })(self)
 })();
