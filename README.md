@@ -1,8 +1,9 @@
 opal-dom: Pure DOM library for Opal
 ===================================
 
-opal-dom is based around the `DOM` class which wraps a native dom
-element.
+opal-dom is based around the `Element` class which wraps a native dom
+element. The Kernel method `DOM()` is available as the main selector
+method for finding elements inside the dom.
 
 ## Finding Elements
 

@@ -1,16 +1,22 @@
 module Kernel
 
+  # @depreciated
+  def Element(selector)
+    puts "Kernel#Element is depreciated. Use Kernel#DOM()"
+    DOM(selector)
+  end
+
   # Main selector interface.
   #
   # @example
   #
   #   # returning single elements by id (or nil if they don't exist)
-  #   Element('#foo')       # => <div id="foo">
-  #   Element('#bar')       # => nil
+  #   DOM('#foo')       # => <div id="foo">
+  #   DOM('#bar')       # => nil
   #
   # @param [String] selector id or css selector to find
   # @return [Element, nil] found element or nil
-  def Element(selector)
+  def DOM(selector)
     %x{
       var el
 

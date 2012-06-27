@@ -1,6 +1,6 @@
 describe "Element#class_name" do
   before do
-    @div = Element <<-HTML
+    @div = DOM <<-HTML
       <div id="class-name-spec">
         <div id="foo" class="whiskey"></div>
         <div id="bar" class="scotch brandy"></div>
@@ -20,19 +20,19 @@ describe "Element#class_name" do
   end
 
   it "should return the Elements' classname" do
-    Element('#foo').class_name.should == 'whiskey'
-    Element('#bar').class_name.should == 'scotch brandy'
+    DOM('#foo').class_name.should == 'whiskey'
+    DOM('#bar').class_name.should == 'scotch brandy'
   end
 
   it "should return an empty string for Elements with no classname" do
-    Element('#baz').class_name.should == ''
-    Element('#buz').class_name.should == ''
+    DOM('#baz').class_name.should == ''
+    DOM('#buz').class_name.should == ''
   end
 end
 
 describe "Element#class_name=" do
   before do
-    @div = Element <<-HTML
+    @div = DOM <<-HTML
       <div id="set-class-name-spec">
         <div id="foo" class=""></div>
         <div id="bar" class="oranges"></div>
@@ -50,12 +50,12 @@ describe "Element#class_name=" do
   end
 
   it "should set the given class name on the Element" do
-    Element('#foo').class_name = 'apples'
-    Element('#foo').class_name.should == 'apples'
+    DOM('#foo').class_name = 'apples'
+    DOM('#foo').class_name.should == 'apples'
   end
 
   it "should replace any existing classname" do
-    bar = Element '#bar'
+    bar = DOM '#bar'
     bar.class_name.should == 'oranges'
 
     bar.class_name = 'lemons'

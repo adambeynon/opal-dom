@@ -1,6 +1,6 @@
 describe "Element#append" do
   before do
-    @div = Element <<-HTML
+    @div = DOM <<-HTML
       <div id="append-spec">
         <div id="woosh"></div>
         <div id="kapow"></div>
@@ -16,7 +16,7 @@ describe "Element#append" do
 
   describe "when given string content" do
     it "should append the dom nodes in the string into the element" do
-      woosh = Element '#woosh'
+      woosh = DOM '#woosh'
       html  = '<p>Hey there</p>'
       woosh.append html
       # FIXME? IE uses uppercase element names?
@@ -24,7 +24,7 @@ describe "Element#append" do
     end
 
     it "should append multiple elements from html string" do
-      kapow = Element '#kapow'
+      kapow = DOM '#kapow'
       html  = '<p>Hello</p><p>World</p>'
       kapow.append html
       # FIXME? IE uses uppercase element names?
