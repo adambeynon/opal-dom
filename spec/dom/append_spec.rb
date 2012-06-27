@@ -17,14 +17,18 @@ describe "Element#append" do
   describe "when given string content" do
     it "should append the dom nodes in the string into the element" do
       woosh = Element '#woosh'
-      woosh.append '<p>Hey there</p>'
-      woosh.html.should == "<p>Hey there</p>"
+      html  = '<p>Hey there</p>'
+      woosh.append html
+      # FIXME? IE uses uppercase element names?
+      woosh.html.downcase.should == html.downcase
     end
 
     it "should append multiple elements from html string" do
       kapow = Element '#kapow'
-      kapow.append '<p>Hello</p><p>World</p>'
-      kapow.html.should == '<p>Hello</p><p>World</p>'
+      html  = '<p>Hello</p><p>World</p>'
+      kapow.append html
+      # FIXME? IE uses uppercase element names?
+      kapow.html.downcase.should == html.downcase
     end
   end
 end

@@ -25,7 +25,8 @@ module Kernel
         }
       }
       else if (/\\s*</.test(selector)) {
-        return #{ Element.parse selector };
+        var rrrr = #{ Element.parse selector };
+        return rrrr;
       } 
       else {
         var el = document.querySelectorAll(selector), res = #{ Element.allocate };

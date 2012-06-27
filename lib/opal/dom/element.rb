@@ -441,12 +441,20 @@ class Element
   # which is useful for overcoming some awkward IE bugs
   %x{
     function nodes_from_html_string(tag, string) {
+      // FIXME: temp fix for IE not parsing <style> tags etc if there
+      // is no leading content
+      string = '_' + string;
+
       var div = document.createElement(tag), arr = [];
       div.innerHTML = string;
 
       for (var i = 0, n = div.childNodes, l = n.length; i < l; i++) {
         arr[i] = n[i];
       }
+
+      // FIXME: we don't use first child as we inserted a fake node
+      // above ('_' as text node);
+      arr.shift();
 
       return arr;
     }
