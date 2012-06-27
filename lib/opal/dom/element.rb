@@ -1,30 +1,5 @@
 class Element
 
-  # Alias for `Kernel#Element()`
-  # @param [String] str id, selector or html string
-  def self.[](str)
-    Element(str)
-  end
-
-  # Parses the given html string into a new element. Only the first
-  # element will be returned. If no elements are found then an error
-  # will be raised.
-  def self.parse(str)
-    %x{
-      var nodes = nodes_from_html_string('div', str), node;
-
-      for (var i = 0, length = nodes.length; i < length; i++) {
-        node = nodes[i];
-
-        if (node.nodeType === 1) {
-          return #{ Element.new `node` }
-        }
-      }
-
-      #{ raise "no Element node in content" }
-    }
-  end
-
   # Create new `Element` instance either by passing a string which
   # represents a tag name to create, or by passing a native Element
   # Element which will then be wrapped by this new instance. Any
@@ -46,7 +21,22 @@ class Element
   def initialize(el = :div)
     %x{
       if (typeof(el) === 'string') {
-        el = document.createElement(el);
+        // passing html string?
+        if (/\\s*</.test(el)) {
+          var nodes = nodes_from_html_string('div', el);
+
+          for (var i = 0, length = nodes.length; i < length; i++) {
+            el = nodes[i];
+
+            if (el.nodeType === 1) {
+              break;
+            }
+          }
+        }
+        else {
+          // otherwise try and create element by tag name
+          el = document.createElement(el);
+        }
       }
 
       if (!el || (el.nodeType !== 1)) {
