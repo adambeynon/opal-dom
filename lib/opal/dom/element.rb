@@ -399,6 +399,10 @@ class Element
     # ...
   end
 
+  def parent
+    sibling :parentNode
+  end
+
   # JS HELPERS
   # ==========
 
@@ -450,6 +454,10 @@ class Element
 
       for (var i = 0, n = div.childNodes, l = n.length; i < l; i++) {
         arr[i] = n[i];
+      }
+
+      for (var i = 0, length = arr.length; i < length; i++) {
+        div.removeChild(arr[i]);
       }
 
       // FIXME: we don't use first child as we inserted a fake node
