@@ -58,6 +58,21 @@ class Element
     }
   end
 
+  def [](name)
+    %x{
+      if (name === 'href') {
+        return this.el.getAttribute(name, 2) || '';
+      }
+      else {
+        return this.el.getAttribute(name) || '';
+      }
+    }
+  end
+
+  def []=(name, value)
+    `this.el.setAttribute(name, value)`
+  end
+
   def <<(content)
     %x{
       // content is a Element instance
