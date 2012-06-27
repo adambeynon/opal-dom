@@ -1,4 +1,4 @@
-describe "Kernel#Element" do
+describe "Kernel#DOM" do
   before do
     @div = DOM <<-HTML
       <div id="element-spec">
