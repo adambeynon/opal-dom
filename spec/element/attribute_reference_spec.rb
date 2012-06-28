@@ -1,6 +1,6 @@
 describe "Element#[]" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="attribute-reference-spec">
         <div id="foo" title="Hello there!"></div>
         <div id="bar"></div>
@@ -18,15 +18,15 @@ describe "Element#[]" do
   end
 
   it "should retrieve the attr value from the element" do
-    DOM('#foo')[:title].should == "Hello there!"
+    Document['#foo'][:title].should == "Hello there!"
   end
 
   it "should return an empty string for an empty attribute value" do
-    DOM('#bar')[:title].should == ""
-    DOM('#baz')[:title].should == ""
+    Document['#bar'][:title].should == ""
+    Document['#baz'][:title].should == ""
   end
 
   it "should read 'href' attribute correctly" do
-    DOM('#href-test')[:href].should == "foo.js"
+    Document['#href-test'][:href].should == "foo.js"
   end
 end

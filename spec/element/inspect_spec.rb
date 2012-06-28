@@ -1,6 +1,6 @@
 describe "Element#inspect" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="inspect-spec">
         <div id="foo"></div>
         <div class="bar"></div>
@@ -16,7 +16,7 @@ describe "Element#inspect" do
   end
 
   it "should return a string representation of the element" do
-    DOM('#foo').inspect.should == '<div id="foo">'
-    DOM('#lol').inspect.should == '<p id="lol" class="bar">'
+    Document['#foo'].inspect.should == '<div id="foo">'
+    Document['#lol'].inspect.should == '<p id="lol" class="bar">'
   end
 end

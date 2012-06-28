@@ -1,6 +1,6 @@
 describe "Element#[]=" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="attribute-set-spec">
         <div id="foo" title="Apples"></div>
         <div id="bar"></div>
@@ -15,7 +15,7 @@ describe "Element#[]=" do
   end
 
   it "should set the attribute value on the element" do
-    bar = DOM '#bar'
+    bar = Document['#bar']
 
     bar[:title].should == ""
     bar[:title] = 'Oranges'
@@ -23,7 +23,7 @@ describe "Element#[]=" do
   end
 
   it "should replace the old value for the attribute" do
-    foo = DOM '#foo'
+    foo = Document['#foo']
 
     foo[:title].should == 'Apples'
     foo[:title] = 'Pineapple'

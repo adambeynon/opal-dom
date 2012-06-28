@@ -1,6 +1,6 @@
 describe "Element#html" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="html-spec">
         <div id="foo">Hey there</div>
         <div id="bar"><p>Erm</p></div>
@@ -18,7 +18,7 @@ describe "Element#html" do
   end
 
   it "should return the html content of the Element" do
-    DOM('#foo').html.should == "Hey there"
-    DOM('#bar').html.should == "<p>Erm</p>"
+    Document['#foo'].html.should == "Hey there"
+    Document['#bar'].html.should == "<p>Erm</p>"
   end
 end

@@ -1,6 +1,6 @@
 describe "Element#text" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="text-spec">
         <div id="foo">Hey there</div>
         <div id="bar"></div>
@@ -16,21 +16,21 @@ describe "Element#text" do
   end
 
   it "should return the text content for simple Element nodes" do
-    DOM('#foo').text.should == "Hey there"
+    Document['#foo'].text.should == "Hey there"
   end
 
   it "should return an empty string when no text content" do
-    DOM('#bar').text.should == ''
+    Document['#bar'].text.should == ''
   end
 
   it "should return the text content from multiple child nodes" do
-    DOM('#baz').text.should == "Hey over there"
+    Document['#baz'].text.should == "Hey over there"
   end
 end
 
 describe "Element#text=" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="set-text-spec">
         <div id="foo"></div>
         <div id="bar">woosh</div>
@@ -46,20 +46,20 @@ describe "Element#text=" do
   end
 
   it "should set simple text contents on Elements" do
-    foo = DOM '#foo'
+    foo = Document['#foo']
     foo.text = "Hello world"
     foo.text.should == "Hello world"
   end
 
   it "should replace any current content in the Element" do
-    bar = DOM '#bar'
+    bar = Document['#bar']
     bar.text.should == "woosh"
     bar.text = "kapow"
     bar.text.should == "kapow"
   end
 
   it "should escape contents correctly" do
-    baz = DOM '#baz'
+    baz = Document['#baz']
     baz.text = "<div><p>lol</p></div>"
     baz.text.should == "<div><p>lol</p></div>"
   end

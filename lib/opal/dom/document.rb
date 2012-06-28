@@ -1,4 +1,23 @@
 module Document
+
+  # When given an element id, of the form `#foo`, then this will return
+  # a new Element instance wrapping that given element. If the element
+  # does not actually exist then nil will be returned.
+  #
+  # If a generic CSS selector is given, then an array of matching
+  # elements will be returned, even if the array is empty.
+  #
+  # @example
+  #
+  #   # finding by id
+  #   Document['#foo']    # => <div id="foo">
+  #   Document['#bar']    # => nil
+  #
+  #   # finding by css selector
+  #   Document['.my_class']   # => [...]
+  #
+  # @param [String] selector element id or css selector
+  # @return [Element, Array<Element>]
   def self.[](selector)
     %x{
       if (selector.charAt(0) === '#') {
@@ -9,10 +28,6 @@ module Document
         }
 
         return nil;
-      }
-      else if (/\\s*</.test(selector)) {
-        console.log("Document#['html string to parse'] is depreciated. Use Element.new() instead");
-        return #{ Element.new `selector` }
       }
       else {
         var el = document.querySelectorAll(selector), res = #{ Element.allocate };
@@ -25,10 +40,6 @@ module Document
         return res;
       }
     }
-  end
-
-  def self.body_ready?
-    `!!(document && document.body)`
   end
 
   def self.ready?(&block)

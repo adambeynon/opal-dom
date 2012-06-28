@@ -1,6 +1,6 @@
 describe "Element#parent" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="foo">
         <div id="bar"></div>
         <div id="baz"></div>
@@ -15,11 +15,11 @@ describe "Element#parent" do
   end
 
   it "should return the parent of the element" do
-    DOM('#bar').parent.id.should == "foo"
+    Document['#bar'].parent.id.should == "foo"
   end
 
   it "should return nil when the element has no parent" do
-    el = DOM '<div id="woosh"></div>'
+    el = Element.new '<div id="woosh"></div>'
     el.parent.should be_nil
   end
 end

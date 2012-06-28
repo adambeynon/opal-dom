@@ -1,0 +1,3 @@
+module Browser
+  # ..
+end

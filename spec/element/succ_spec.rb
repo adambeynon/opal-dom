@@ -1,6 +1,6 @@
 describe "Element#succ" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="succ-spec">
         <div id="foo"></div>
         <div id="bar"></div>
@@ -15,10 +15,10 @@ describe "Element#succ" do
   end
 
   it "should return the succ sibling" do
-    DOM('#foo').succ.id.should == 'bar'
+    Document['#foo'].succ.id.should == 'bar'
   end
 
   it "should return nil when no succ Element" do
-    DOM('#bar').succ.should be_nil
+    Document['#bar'].succ.should be_nil
   end
 end

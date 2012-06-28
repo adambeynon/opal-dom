@@ -1,6 +1,6 @@
 describe "Element#id" do
   before do
-    @div = DOM <<-HTML
+    @div = Element.new <<-HTML
       <div id="Element-id-spec">
         <div id="foo"></div>
         <div id="bar"></div>
@@ -15,7 +15,7 @@ describe "Element#id" do
   end
 
   it "should return the Element's id" do
-    DOM('#foo').id.should == 'foo'
-    DOM('#bar').id.should == 'bar'
+    Document['#foo'].id.should == 'foo'
+    Document['#bar'].id.should == 'bar'
   end
 end

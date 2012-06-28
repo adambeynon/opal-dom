@@ -1,9 +1,7 @@
 opal-dom: Pure DOM library for Opal
 ===================================
 
-opal-dom is based around the `Element` class which wraps a native dom
-element. The Kernel method `DOM()` is available as the main selector
-method for finding elements inside the dom.
+opal-dom is a dom library for opal to be used in the browser.
 
 ## Interacting with the DOM
 
@@ -17,14 +15,14 @@ Assuming the HTML:
 ```
 
 ```ruby
-DOM('#foo')
+Document['#foo']
 # => <div id="foo">
 
-DOM('#bleh')
+Document['#bleh']
 # => nil
 
-DOM('#bar').class
-# => DOM
+Document['#bar'].class
+# => Element
 ```
 
 ### Ensuring the DOM is ready
@@ -47,7 +45,7 @@ end
 ```
 
 ```ruby
-foo = DOM '#foo'
+foo = Document['#foo']
 
 foo.class_name
 # => 'apples'
@@ -73,14 +71,14 @@ events, and `Element#off` for removing them. These methods handle cross
 browser differences.
 
 ```ruby
-DOM('#mydiv').on :click  { puts "div was clicked!" }
+Document['#mydiv'].on :click  { puts "div was clicked!" }
 ```
 
 The event passed into the block is an instance of the `Event` class,
 which wraps a native browser event.
 
 ```ruby
-DOM('#mydiv').on :mousedown do |evt|
+Document['#mydiv'].on :mousedown do |evt|
   evt.meta?   # => was meta key used
   evt.shift?  # => was shift key used
 
