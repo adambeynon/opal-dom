@@ -100,7 +100,7 @@ Element.new('<div id="foo">Hey there</div>')
 # => <div id="foo">
 
 Element.new('<p id="lol"></p><p id="hah"></p>')
-# => <div id="lol">
+# => <p id="lol">
 ```
 
 It is important to note that only the first element will be parsed, and
@@ -204,3 +204,60 @@ foo.has_class? 'apples'   # => true
 foo.has_class? 'oranges'  # => true
 foo.has_class? 'lemons'   # => false
 ```
+
+### Element manipulation
+
+#### Element#clear
+
+Removes all child nodes from this elements, then returns receiver. This
+will remove all children, including non elements.
+
+```html
+<div id="foo">
+  <p>
+    Hey there
+  </p>
+</div>
+```
+
+```ruby
+Document['#foo'].clear
+```
+
+```html
+<div id="foo"></div>
+```
+
+#### Element#html
+
+Returns the html content of the element. The result will be a string
+of all the contents inside this element.
+
+```html
+<div id="foo"><p>Hello world</p></div>
+```
+
+```ruby
+Document['#foo'].html
+# => "<p>Hello World</p>"
+```
+
+#### Element#html=
+
+Sets the html content of this element to the given string. Any existing
+content is removed from the element first.
+
+```html
+<!-- initial -->
+<div id="foo"><p>Hello</p></div>
+```
+
+```ruby
+Document['#foo'].html = '<a href="example.com">Click me</a>'
+```
+
+```html
+<!-- result -->
+<div id="foo"><a href="example.com">Click me</a></div>
+```
+

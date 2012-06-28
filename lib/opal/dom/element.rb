@@ -1,23 +1,5 @@
 class Element
 
-  # Create new `Element` instance either by passing a string which
-  # represents a tag name to create, or by passing a native Element
-  # Element which will then be wrapped by this new instance. Any
-  # other argument type will result in an error.
-  #
-  # @example
-  #
-  #   Element.new
-  #   # => <div>
-  #
-  #   Element.new 'p'
-  #   # => <p>
-  #
-  #   Element.new `document.getElementById('foo')
-  #   # => <div id="foo">
-  #
-  # @param [String, HTMLElement] el tag name or native Element to create
-  # @return [Element] returns self
   def initialize(el = :div)
     %x{
       if (typeof(el) === 'string') {
@@ -100,15 +82,6 @@ class Element
     }
   end
 
-  # Adds the given classname `name` to this Element. This method has no
-  # effect if the Element already has the given classname.
-  #
-  # @example
-  #
-  #   Element('#foo').add_class 'bar'
-  #
-  # @param [String] name classname to add
-  # @return [Element] returns self
   def add_class(name)
     %x{
       var el = this.el, className = el.className;
@@ -124,18 +97,6 @@ class Element
     }
   end
 
-  # Returns `true` if this Element has the given classname in its set
-  # of classes, `false` otherwise.
-  #
-  # @example
-  #
-  #   # <div id="foo" class="apples"></div>
-  #
-  #   Element('#foo').has_class?('apples')    # => true
-  #   Element('#foo').has_class?('oranges')   # => false
-  #
-  # @param [String] name the classname to check for
-  # @return [true, false]
   def has_class?(name)
     %x{
       var el = this.el;
@@ -203,15 +164,6 @@ class Element
     sibling :previousSibling
   end
 
-  # Removes the given classname from this Elements' class. There is no
-  # effect if this Element does not have the given classname.
-  #
-  # @example
-  #
-  #   Element('#foo').remove_class 'apples'
-  #
-  # @param [String] name classname to remove
-  # @return [Element] returns self
   def remove_class(name)
     %x{
       var el = this.el, className = ' ' + el.className + ' ';
@@ -270,13 +222,6 @@ class Element
     }
   end
 
-  # Remove all child nodes from this Element. Returns self.
-  #
-  # @example
-  #
-  #   Element('#foo').clear       # => <div id="foo">
-  #
-  # @return self
   def clear
     %x{
       var el = this.el;
@@ -299,28 +244,10 @@ class Element
     }
   end
 
-  # Returns a string representing the html content inside this Element.
-  #
-  # @example
-  #
-  #   Element('#title').html
-  #   # => "<p>Hello world</p>"
-  #
-  # @return [String]
   def html
     `this.el.innerHTML`
   end
 
-  # Set the inner html of this Element to the given string.
-  #
-  # @example
-  #
-  #   e = Element.new
-  #   e.html = "<p>hello</p>"
-  #   # => "<div><p>hello</p></div>"
-  #
-  # @param [String] html the string to set
-  # @return [Element] returns self
   def html=(html)
     %x{
       var el = this.el, tag = el.tagName.toLowerCase();

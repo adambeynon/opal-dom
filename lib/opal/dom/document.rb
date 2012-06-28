@@ -1,23 +1,5 @@
 module Document
 
-  # When given an element id, of the form `#foo`, then this will return
-  # a new Element instance wrapping that given element. If the element
-  # does not actually exist then nil will be returned.
-  #
-  # If a generic CSS selector is given, then an array of matching
-  # elements will be returned, even if the array is empty.
-  #
-  # @example
-  #
-  #   # finding by id
-  #   Document['#foo']    # => <div id="foo">
-  #   Document['#bar']    # => nil
-  #
-  #   # finding by css selector
-  #   Document['.my_class']   # => [...]
-  #
-  # @param [String] selector element id or css selector
-  # @return [Element, Array<Element>]
   def self.[](selector)
     %x{
       if (selector.charAt(0) === '#') {
