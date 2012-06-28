@@ -30,14 +30,7 @@ module Document
         return nil;
       }
       else {
-        var el = document.querySelectorAll(selector), res = #{ Element.allocate };
-
-        for (var i = 0, length = el.length; i < length; i++) {
-          res[i] = el[i];
-        }
-
-        res.length = el.length;
-        return res;
+        return __slice.call(document.querySelectorAll(selector));
       }
     }
   end
