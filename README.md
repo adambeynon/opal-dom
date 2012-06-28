@@ -8,7 +8,7 @@ opal-dom is a dom library for opal to be used in the browser.
 The `Document` module has methods available for interacting with the
 native document object. 
 
-### ready?
+### Document.ready?
 
 This method is used to run code once the document is ready and
 resources have loaded. Passing a block to this method ensures that
@@ -67,7 +67,7 @@ The `Element.new` method can do 3 specific tasks depending on the
 argument: create a new dom element, wrap a passed native element or
 parse a given html string into a new element.
 
-### Creating Elements
+#### Creating Elements
 
 Passing a tag name (or no argument which defaults to 'div') will create
 a new dom element internally and set that as the context of the new
@@ -78,7 +78,7 @@ Element.new       # => <div></div>
 Element.new 'p'   # => <p></p>
 ```
 
-### Wrapping existing elements
+#### Wrapping existing elements
 
 It is obviously useful to wrap preexisting elements, which is easily
 done by passing the raw element directly into `.new()`.
@@ -88,7 +88,7 @@ Element.new(`document.getElementById('foo')`)
 # => <div id="foo"></div>
 ```
 
-### Parsing HTML string
+#### Parsing HTML string
 
 When dealing with modern web apps which use templates, it is useful to
 parse a string of html into a new element. A raw html string can be
@@ -107,3 +107,100 @@ It is important to note that only the first element will be parsed, and
 all subsequent elements will be ignored. Elements inside the first
 element will also be parsed just fine and become children of this new
 element.
+
+### CSS classes
+
+#### Element#class_name
+
+Simple returns the css classname for this element. If no classname
+exists, then an empty string will be returned.
+
+```html
+<div id="foo" class="user"></div>
+<div id="bar"></div>
+```
+
+```ruby
+Document['#foo'].class_name     # => "user"
+Document['#bar'].class_name     # => ""
+```
+
+#### Element#class_name=
+
+Used to set the css classname. This will overwrite any classnames that
+already exist on the element.
+
+```html
+<div id="foo" class="apples"></div>
+```
+
+```ruby
+foo = Document['#foo']
+foo.class_name
+# => "apples"
+
+foo.class_name = "oranges"
+foo.class_name
+# => "oranges"
+```
+
+#### Element#add_class
+
+Adds the given css classname to the element. This does not override
+any existing classnames, but just appends to it.
+
+```html
+<div id="foo" class="apples"></div>
+```
+
+```ruby
+foo = Document['#foo']
+foo.class_name
+# => "apples"
+
+foo.add_class "oranges"
+foo.class_name
+# => "apples oranges"
+
+foo.add_class "apples"
+foo.class_name
+# => "apples oranges"
+```
+
+As seen here it is clear that classnames will not be duplicated on the
+element.
+
+#### Element#remove_class
+
+Used to remove an existing css classname from the element. If the
+element doesn't actually have the class name then there is no effect.
+
+```html
+<div id="foo" class="apples oranges"></div>
+```
+
+```ruby
+foo = Document['#foo']
+
+foo.remove_class 'apples'
+foo.class_name
+# => "oranges"
+
+foo.remove_class "oranges"
+foo.remove_class "apples"
+foo.class_name
+# => ""
+```
+
+#### Element#has_class?
+
+```html
+<div id="foo" class="apples oranges"></div>
+```
+
+```ruby
+foo = Document['#foo']
+foo.has_class? 'apples'   # => true
+foo.has_class? 'oranges'  # => true
+foo.has_class? 'lemons'   # => false
+```
