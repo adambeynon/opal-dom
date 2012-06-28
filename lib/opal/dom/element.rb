@@ -408,6 +408,12 @@ class Element
     sibling :parentNode
   end
 
+  # Returns the tagname of this element
+  # @return [String]
+  def tag
+    `this.el.tagName.toLowerCase()`
+  end
+
   # JS HELPERS
   # ==========
 
