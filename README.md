@@ -192,41 +192,7 @@ foo.class_name
 # => ""
 ```
 
-#### Element#has_class?
-
-```html
-<div id="foo" class="apples oranges"></div>
-```
-
-```ruby
-foo = Document['#foo']
-foo.has_class? 'apples'   # => true
-foo.has_class? 'oranges'  # => true
-foo.has_class? 'lemons'   # => false
-```
-
 ### Element manipulation
-
-#### Element#clear
-
-Removes all child nodes from this elements, then returns receiver. This
-will remove all children, including non elements.
-
-```html
-<div id="foo">
-  <p>
-    Hey there
-  </p>
-</div>
-```
-
-```ruby
-Document['#foo'].clear
-```
-
-```html
-<div id="foo"></div>
-```
 
 #### Element#html
 

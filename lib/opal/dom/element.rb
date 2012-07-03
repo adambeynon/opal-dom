@@ -97,6 +97,66 @@ class Element
     }
   end
 
+  # Find all elements within the scope of this element that match
+  # the given selector. This method will always return an array which
+  # will contain 0 or more matching elements.
+  #
+  #   elem.all('.foo')    # => []
+  #
+  # @param [String] selector css selector to search for
+  # @return [Array<Element>] matching elements
+  def all(selector)
+    []
+  end
+
+  def class_name
+    `this.el.className || ''`
+  end
+
+  def class_name=(name)
+    %x{
+      this.el.className = name;
+      return this;
+    }
+  end
+
+  # Remove all child nodes from this element, and return the receiver.
+  # This will remove text nodes as well as real elements.
+  #
+  #   Document['#foo'].clear
+  #
+  # @return self
+  def clear
+    %x{
+      var el = this.el;
+
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
+
+      return this;
+    }
+  end
+
+  # Finds the first element matching the given selector that is within
+  # the scope of this element. If no matching element is found, then
+  # `nil` is returned.
+  #
+  #   elem.find('.bar')     # => element or nil
+  #
+  # @param [String] selector css selector to search for
+  # @return [Element, nil] matching element or nil
+  def find(selector)
+    nil
+  end
+
+  # Returns true if this element has a css class matching the given
+  # name, false otherwise.
+  #
+  #   elem.has_class? 'foo'     # => true or false
+  #
+  # @param [String] name css classname to check for
+  # @return [true, false]
   def has_class?(name)
     %x{
       var el = this.el;
@@ -124,17 +184,6 @@ class Element
       if (val = el.className) str += (' class="' + val + '"');
 
       return str + '>';
-    }
-  end
-
-  def class_name
-    `this.el.className || ''`
-  end
-
-  def class_name=(name)
-    %x{
-      this.el.className = name;
-      return this;
     }
   end
 
@@ -218,18 +267,6 @@ class Element
   def show
     %x{
       this.el.style.display = '';
-      return this;
-    }
-  end
-
-  def clear
-    %x{
-      var el = this.el;
-
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
-      }
-
       return this;
     }
   end
