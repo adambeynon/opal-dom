@@ -147,7 +147,15 @@ class Element
   # @param [String] selector css selector to search for
   # @return [Element, nil] matching element or nil
   def find(selector)
-    nil
+    %x{
+      var res = this.el.querySelectorAll(selector);
+
+      if (res.length) {
+        return #{ Element.new `res[0]` }
+      }
+
+      return nil;
+    }
   end
 
   # Returns true if this element has a css class matching the given
