@@ -3,7 +3,7 @@ require File.expand_path('../lib/opal/dom/version', __FILE__)
 
 Gem::Specification.new do |s|
   s.name         = 'opal-dom'
-  s.version      = DOM::VERSION
+  s.version      = Browser::VERSION
   s.author       = 'Adam Beynon'
   s.email        = 'adam@adambeynon.com'
   s.homepage     = 'http://opalrb.org'
