@@ -8,48 +8,19 @@ opal-dom is a dom library for opal to be used in the browser.
 The `Document` module has methods available for interacting with the
 native document object. 
 
-### Document.ready?
-
-This method is used to run code once the document is ready and
-resources have loaded. Passing a block to this method ensures that
-the document body has also loaded.
+```html
+<div id="foo"></div>
+<p class="bar"></p>
+<p class="bar"></p>
+```
 
 ```ruby
 Document.ready? do
-  puts "document is ready!"
+  puts Document['#foo']     # => <div id="foo">
+  puts Document['#bar']     # => nil
+  puts Document['.bar']     # => [<p class="bar">, <p class="bar">]
 end
 ```
-
-You can of course write code outside of `ready?` blocks, but it is
-then down to you to ensure the document has actually loaded.
-
-### Document[]
-
-`Document[]` is the main method used for searching the document for
-elements with a given id, or elements with the given css selector.
-
-#### Finding elements by id
-
-Elements can be searched for by id, and if found, will be returned as
-an instance of the `Element` class. If no matching element is found
-then `nil` is returned.
-
-```ruby
-Document['#foo']    # => <div id="foo">
-Document['#bar']    # => nil
-```
-
-#### Finding elements by css selector
-
-Alternatively, to find generic elements by any valid css selector, just
-pass the selector into this method. The result is an array containing
-the matched elements.
-
-```ruby
-Document['.my-class']     # => [<div class="my-class">, ...]
-```
-
-If no elements are found then an empty array will be returned.
 
 ## Element
 
