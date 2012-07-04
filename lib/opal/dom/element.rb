@@ -1,3 +1,9 @@
+# `Element` wraps a native DOM element as a ruby object. The native
+# element is stored as the private `el` ivar, but it shouldn't be
+# accessed directly.
+#
+# There are various traversal methods here which mostly ignore non
+# element nodes (i.e. text nodes etc will not be returned).
 class Element
 
   def initialize(el = :div)
@@ -106,7 +112,15 @@ class Element
   # @param [String] selector css selector to search for
   # @return [Array<Element>] matching elements
   def all(selector)
-    []
+    %x{
+      var result = [], set = this.el.querySelectorAll(selector);
+
+      for (var i = 0, length = set.length; i < length; i++) {
+        result.push(#{ Element.new `set[i]` });
+      }
+
+      return result;
+    }
   end
 
   def class_name
@@ -384,6 +398,10 @@ class Element
   # @return [String]
   def tag
     `this.el.tagName.toLowerCase()`
+  end
+
+  def value
+    `this.el.value`
   end
 
   # JS HELPERS
