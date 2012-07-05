@@ -113,7 +113,7 @@ class Element
   # @return [Array<Element>] matching elements
   def all(selector)
     %x{
-      var result = [], set = this.el.querySelectorAll(selector);
+      var result = [], set = Sizzle(selector);
 
       for (var i = 0, length = set.length; i < length; i++) {
         result.push(#{ Element.new `set[i]` });
@@ -162,7 +162,7 @@ class Element
   # @return [Element, nil] matching element or nil
   def find(selector)
     %x{
-      var res = this.el.querySelectorAll(selector);
+      var res = Sizzle(selector, this.el);
 
       if (res.length) {
         return #{ Element.new `res[0]` }

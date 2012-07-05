@@ -2,5 +2,5 @@ source :rubygems
 
 gemspec
 
-gem "opal"
+gem "opal", git: 'git://github.com/adambeynon/opal.git'
 gem "opal-spec"

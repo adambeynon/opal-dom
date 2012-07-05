@@ -34,7 +34,7 @@ module Document
         return nil;
       }
       else {
-        return __slice.call(document.querySelectorAll(selector));
+        return __slice.call(Sizzle(selector));
       }
     }
   end
