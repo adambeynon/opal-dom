@@ -134,6 +134,16 @@ class Element
     }
   end
 
+  def css(name, value = undefined)
+    %x{
+      if (value == null) {
+        return this.el.style[name];
+      }
+
+      return this.el.style[name] = value;
+    }
+  end
+
   # Remove all child nodes from this element, and return the receiver.
   # This will remove text nodes as well as real elements.
   #
@@ -191,10 +201,63 @@ class Element
     }
   end
 
+  # Hides this element by setting the 'display' style property to
+  # 'none'.
+  #
+  # @return [Element] returns receiver
+  def hide
+    %x{
+      this.el.style.display = 'none';
+      return this;
+    }
+  end
+
+  def html
+    `this.el.innerHTML`
+  end
+
+  def html=(html)
+    %x{
+      var el = this.el, tag = el.tagName.toLowerCase();
+
+      // cleanup event listeners etc from all children
+      cleanup_element_children(el);
+
+      // well behaved browsers
+      if (supports_inner_html) {
+        el.innerHTML = html;
+      }
+      else {
+        #{ raise "innerHTML broken, workaround." };
+      }
+
+      return this;
+    }
+  end
+
   def id
     `this.el.id || ''`
   end
 
+  # Returns string version of this element. The returned string will
+  # list the tag name for all elements, as well as an id and class
+  # name if set on the receiver.
+  #
+  # Given the html:
+  #
+  #   ```html
+  #   <div id="foo"></div>
+  #   <div id="bar" class="apples"></div>
+  #   <div class="foo"></div>
+  #   ```
+  #
+  # This method will result in:
+  #
+  #   ```ruby
+  #   Document['#foo'].inspect    # => '<div id="foo">'
+  #   ```
+  #
+  # @return [String]
   def inspect
     %x{
       var el, str, result = [];
@@ -226,122 +289,6 @@ class Element
   # @return [Element, nil] next Element if it exists
   def next(selector = undefined)
     sibling :nextSibling, selector
-  end
-
-  # Returns the previous sibling of this Element. Text nodes are
-  # ignored, and if no Element is found then `nil` is returned.
-  #
-  # @example
-  #
-  #   elem.prev     # => Element instance
-  #   elem.prev     # => nil
-  #
-  # @return [Element, nil] previous Element or nil
-  def prev
-    sibling :previousSibling
-  end
-
-  def remove_class(name)
-    %x{
-      var el = this.el, className = ' ' + el.className + ' ';
-
-      className = className.replace(' ' + name + ' ', ' ');
-      className = className.replace(/^\\s+/, '').replace(/\\s+$/, '');
-
-      el.className = className;
-
-      return this;
-    }
-  end
-
-  def remove
-    %x{
-      var el = this.el, parent = el.parentNode;
-
-      if (parent) {
-        parent.removeChild(el);
-      }
-
-      return this;
-    }
-  end
-
-  # @param [String] type should be native type (e.g. 'nextSibling')
-  def sibling(type, selector = undefined)
-    %x{
-      var el = this.el;
-
-      while (el = el[type]) {
-        if (el.nodeType !== 1) {
-          continue;
-        }
-
-        if (!selector || Sizzle.matchesSelector(el, selector)) {
-          return #{ Element.new `el` }
-        }
-      }
-
-      return nil;
-    }
-  end
-
-  alias succ next
-
-  def hide
-    %x{
-      this.el.style.display = 'none';
-      return this;
-    }
-  end
-
-  def show
-    %x{
-      this.el.style.display = '';
-      return this;
-    }
-  end
-
-  def css(name, value = undefined)
-    %x{
-      if (value == null) {
-        return this.el.style[name];
-      }
-
-      return this.el.style[name] = value;
-    }
-  end
-
-  def html
-    `this.el.innerHTML`
-  end
-
-  def html=(html)
-    %x{
-      var el = this.el, tag = el.tagName.toLowerCase();
-
-      // cleanup event listeners etc from all children
-      cleanup_element_children(el);
-
-      // well behaved browsers
-      if (supports_inner_html) {
-        el.innerHTML = html;
-      }
-      else {
-        #{ raise "innerHTML broken, workaround." };
-      }
-
-      return this;
-    }
-  end
-
-  def text
-    `Sizzle.getText(this.el)`
-  end
-
-  def text=(str)
-    self.clear
-    `this.el.appendChild(document.createTextNode(str))`
-    self
   end
 
   # Add the given block `handler` as a listener for the event `type`.
@@ -402,10 +349,102 @@ class Element
     sibling :parentNode
   end
 
+  # Returns the previous sibling of this Element. Text nodes are
+  # ignored, and if no Element is found then `nil` is returned.
+  #
+  # @example
+  #
+  #   elem.prev     # => Element instance
+  #   elem.prev     # => nil
+  #
+  # @return [Element, nil] previous Element or nil
+  def prev
+    sibling :previousSibling
+  end
+
+  def remove_class(name)
+    %x{
+      var el = this.el, className = ' ' + el.className + ' ';
+
+      className = className.replace(' ' + name + ' ', ' ');
+      className = className.replace(/^\\s+/, '').replace(/\\s+$/, '');
+
+      el.className = className;
+
+      return this;
+    }
+  end
+
+  def remove
+    %x{
+      var el = this.el, parent = el.parentNode;
+
+      if (parent) {
+        parent.removeChild(el);
+      }
+
+      return this;
+    }
+  end
+
+  # Removes any inline 'display' property that is being used to hide
+  # this element. This will not affect any elements hidden by a css
+  # rule by their class name/id.
+  #
+  # @return [Element] returns receiver
+  def show
+    %x{
+      this.el.style.display = '';
+      return this;
+    }
+  end
+
+  # @param [String] type should be native type (e.g. 'nextSibling')
+  def sibling(type, selector = undefined)
+    %x{
+      var el = this.el;
+
+      while (el = el[type]) {
+        if (el.nodeType !== 1) {
+          continue;
+        }
+
+        if (!selector || Sizzle.matchesSelector(el, selector)) {
+          return #{ Element.new `el` }
+        }
+      }
+
+      return nil;
+    }
+  end
+
+  alias succ next
+
   # Returns the tagname of this element
   # @return [String]
   def tag
     `this.el.tagName.toLowerCase()`
+  end
+
+  def text
+    `Sizzle.getText(this.el)`
+  end
+
+  def text=(str)
+    self.clear
+    `this.el.appendChild(document.createTextNode(str))`
+    self
+  end
+
+  alias to_s inspect
+
+  # If this element is currently visible, then this will hide the
+  # elements, otherwise as the element is hidden it will become
+  # visible.
+  #
+  # @return [Element] returns receiver
+  def toggle
+    visible? ? hide : show
   end
 
   # Returns this elements' parent if it exists.
@@ -449,6 +488,16 @@ class Element
 
   def value
     `this.el.value`
+  end
+
+  # Returns true if this element is visible, false otherwise. This
+  # relies on the element's display style attribute. Setting the
+  # display with a css class will not make this method work as
+  # expected.
+  #
+  # @return [true, false]
+  def visible?
+    `this.el.style.display !== 'none'`
   end
 
   # JS HELPERS
