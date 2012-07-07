@@ -400,6 +400,32 @@ class Element
     `this.el.tagName.toLowerCase()`
   end
 
+  def up(selector = undefined)
+    %x{
+      var el = this.el;
+
+      if (selector == null) {
+        if (el = el.parentNode) {
+          return #{ Element.new `el` };
+        }
+
+        return nil;
+      }
+
+      while (el = el.parentNode) {
+        if (el.nodeType !== 1) {
+          continue;
+        }
+
+        if (Sizzle.matchesSelector(el, selector)) {
+          return #{ Element.new `el` };
+        }
+      }
+
+      return nil;
+    }
+  end
+
   def value
     `this.el.value`
   end
