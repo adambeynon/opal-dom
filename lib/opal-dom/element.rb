@@ -6,6 +6,43 @@
 # element nodes (i.e. text nodes etc will not be returned).
 class Element
 
+  # Creates a new instance of Element either by tag name, a real dom
+  # element or a string of html content to parse. This method will
+  # set the priavte `el` property of this instance to the created
+  # element.
+  #
+  # ## By tag name
+  #
+  # If no argument is given, or the given string is a tag name, then
+  # a new element will be created internally and will be set as the
+  # context of this element instance.
+  #
+  #   Element.new       # => <div>
+  #   Element.new 'p'   # => <p>
+  #
+  # ## With a real native element
+  #
+  # You can pass a real native dom element into this constructor which
+  # will simply make that element the context of this Element instance.
+  #
+  #   Element.new(`document.getElementById('foo')`) # => <div id="foo">
+  #
+  # ## Parsing from raw html string
+  #
+  # Passing a string of html content will result in the first element
+  # being parsed from the string content and becoming the context of
+  # this instance.
+  #
+  #   Element.new('<div id="bar"></div>')   # => <div id="bar">
+  #
+  # If there is more than 1 outer element in the string content, then
+  # only the first element will be used. All text/whitespace are also
+  # ignored.
+  #
+  #   Element.new('  <div></div><p></p>')   # => <div>
+  #
+  # @param [HTMLElement, String] el string or element content
+  # @return [Element]
   def initialize(el = :div)
     %x{
       if (typeof(el) === 'string') {
@@ -36,6 +73,11 @@ class Element
     }
   end
 
+  # Get a dom attribute by name.
+  #
+  #   Document['#foo'][:title]  # => "Some title"
+  #
+  # @param [Symbol, String] name attribute name to get
   def [](name)
     %x{
       if (name === 'href') {
