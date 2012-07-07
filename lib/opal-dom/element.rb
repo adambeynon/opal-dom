@@ -212,14 +212,20 @@ class Element
   # Returns the next sibling of this Element. Text nodes are ignored,
   # and if there is no next Element then `nil` is returned.
   #
-  # @example
-  #
   #   elem.next     # => Element instance
   #   elem.next     # => nil
   #
+  # An optional selector may be passed which will return the next
+  # sibling that matches the given css selector.
+  #
+  #   elem.next('.foo')   # => elem or nil
+  #
+  # If no element matches the selector then nil will be returned.
+  #
+  # @param [String] selector optional selector to match
   # @return [Element, nil] next Element if it exists
-  def next
-    sibling :nextSibling
+  def next(selector = undefined)
+    sibling :nextSibling, selector
   end
 
   # Returns the previous sibling of this Element. Text nodes are
@@ -261,7 +267,7 @@ class Element
   end
 
   # @param [String] type should be native type (e.g. 'nextSibling')
-  def sibling(type)
+  def sibling(type, selector = undefined)
     %x{
       var el = this.el;
 
@@ -270,7 +276,9 @@ class Element
           continue;
         }
 
-        return #{ Element.new `el` }
+        if (!selector || Sizzle.matchesSelector(el, selector)) {
+          return #{ Element.new `el` }
+        }
       }
 
       return nil;
