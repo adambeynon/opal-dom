@@ -400,6 +400,19 @@ class Element
     `this.el.tagName.toLowerCase()`
   end
 
+  # Returns this elements' parent if it exists.
+  #
+  #   Document['#foo'].up     # => element
+  #
+  # If a selector is given then the first parent matching the given
+  # selector will be returned.
+  #
+  #   Document['#foo'].up('.title') # => element
+  #
+  # In both cases, if no element is found then `nil` will be returned.
+  #
+  # @param [String] selector optional selector to use
+  # @return [Element, nil]
   def up(selector = undefined)
     %x{
       var el = this.el;
