@@ -327,7 +327,7 @@ class Element
   end
 
   def text
-    `text_value(this.el)`
+    `Sizzle.getText(this.el)`
   end
 
   def text=(str)
@@ -482,33 +482,6 @@ class Element
           // cleanup based on uid
         }
       }
-    }
-  }
-
-  # Recursively gather all the text contents of this element and its
-  # children.
-  %x{
-    function text_value(el) {
-      var type = el.nodeType, result = '';
-
-      if (type === 1 || type === 9 || type === 11) {
-        if (typeof(el.textContent) === 'string') {
-          return el.textContent;
-        }
-        else if (typeof(el.innerText) === 'string') {
-          return el.innerText.replace(/\\r/g, '');
-        }
-        else {
-          for (var c = el.firstChild; c; c = c.nextSibling) {
-            result += text_value(c);
-          }
-        }
-      }
-      else if (type === 3 || type === 4) {
-        return el.nodeValue;
-      }
-
-      return result;
     }
   }
 end
