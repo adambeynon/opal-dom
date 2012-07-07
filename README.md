@@ -3,6 +3,35 @@ opal-dom: DOM library for Opal
 
 opal-dom is a dom library for opal to be used in the browser.
 
+## Usage
+
+Add to your Gemfile:
+
+```ruby
+# Gemfile
+gem "opal-dom"
+```
+
+Add to opal builder task:
+
+```ruby
+# Rakefile
+Opal::RakeTask.new do |t|
+  t.dependencies = ['opal-dom']
+end
+```
+
+Finally, require it in your opal app:
+
+```ruby
+# app.rb
+require 'opal-dom'
+
+Document.ready? do
+  alert "document is ready!"
+end
+```
+
 ## Running specs
 
 Clone repo:
