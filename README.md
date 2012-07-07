@@ -1,4 +1,4 @@
-opal-dom: Pure DOM library for Opal
+opal-dom: DOM library for Opal
 ===================================
 
 opal-dom is a dom library for opal to be used in the browser.
@@ -20,7 +20,7 @@ bundle install
 Build opal-spec, opal-dom and the actual specs:
 
 ```
-rake dependencies spec build
+rake opal
 ```
 
 Open `spec/index.html` in the browser.
