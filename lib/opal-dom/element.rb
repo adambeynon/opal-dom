@@ -319,7 +319,7 @@ class Element
         el.innerHTML = html;
       }
       else {
-        console.log("innerHTML broken, workaround.");
+        #{ raise "innerHTML broken, workaround." };
       }
 
       return this;

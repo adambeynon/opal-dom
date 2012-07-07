@@ -8,14 +8,14 @@ module Document
   # as an instance of the `Element` class. If no matching element is
   # found then `nil` is returned.
   #
-  #     Document['#foo']    # => <div id="foo">
-  #     Document['#bar']    # => nil
+  #   Document['#foo']    # => <div id="foo">
+  #   Document['#bar']    # => nil
   #
   # Alternatively, to search for elements by a generic css selector,
   # just pass the css selector into this method. The result will be an
   # array containing the matched elements.
   #
-  #     Document['.my-class']     # => array of matched elements
+  #   Document['.my-class']     # => array of matched elements
   #
   # If no elements are found whne searching for css selectors, then an
   # empty array will be returned.
@@ -43,13 +43,31 @@ module Document
   # ready and resources have loaded. Passing a block to this method
   # ensures that `document.body` is also ready.
   #
-  #     Document.ready? do
-  #       puts "Document is now ready"
-  #     end
+  #   Document.ready? do
+  #     puts "Document is now ready"
+  #   end
   #
   # @return [self] returns Document module
   def self.ready?(&block)
     `setTimeout(function() { block.call(block._s); }, 0)`
     self
+  end
+
+  # Return the documents title as a string.
+  #
+  #   Document.title    # => 'opal-dom specs'
+  #
+  # @return [String]
+  def self.title
+    `document.title`
+  end
+
+  # Sets the document title to the given string.
+  #
+  #   Document.title = "foo"
+  #
+  # @param [String] str title to set
+  def self.title=(str)
+    `document.title = str`
   end
 end
