@@ -1,6 +1,14 @@
 # Wrapper around native `XMLHttpRequest` object to perform ajax calls.
 class HTTP
 
+  # Default HTTP options
+  OPTIONS = {
+    headers: {
+      'X-Requested-With' => 'XMLHttpRequest',
+      'Accept' => 'text/javascript, text/html, application/xml, text/xml, */*'
+    }
+  }
+
   # HTTP.get
   #
   #   HTTP.get("api/users/1") do |res|
@@ -48,6 +56,7 @@ class HTTP
   # @param [String] method
   # @param [Hash] options
   def initialize(url, method, options={})
+    options = OPTIONS.merge options
     @action = options[:action]
     %x{
       var xhr = this.xhr = make_xhr(), http = this;
@@ -56,9 +65,19 @@ class HTTP
       xhr.onreadystatechange = function() {
         #{ `http`.on_state_change };
       }
-
-      xhr.send(null);
     }
+
+    if headers = options[:headers]
+      headers.each do |key, value|
+        begin
+          `xhr.setRequestHeader(key, value)`
+        rescue => e
+          # ...?
+        end
+      end
+    end
+
+    `xhr.send(null)`
   end
 
   # Convenience method to parse the body of the response through JSON.
