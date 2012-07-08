@@ -14,4 +14,18 @@ Document.ready? do
       alert "result: #{res.json}"
     end
   end
+
+  # get data
+  Document['#http-3'].on :click do
+    HTTP.get("files/data.json", data: {foo:42}) do |res|
+      alert "check browser log"
+    end
+  end
+
+  # post data
+  Document['#http-4'].on :click do
+    HTTP.post("files/data.json", data: {foo:42}) do |res|
+      alert "check browser log"
+    end
+  end
 end

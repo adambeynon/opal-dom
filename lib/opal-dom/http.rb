@@ -23,6 +23,11 @@ class HTTP
     self.new url, :get, options
   end
 
+  def self.post(url, options={}, &action)
+    options[:action] = action if block_given?
+    self.new url, :post, options
+  end
+
   # The response body from the request. This will be nil until the
   # request is completed.
   #
@@ -58,26 +63,31 @@ class HTTP
   def initialize(url, method, options={})
     options = OPTIONS.merge options
     @action = options[:action]
-    %x{
-      var xhr = this.xhr = make_xhr(), http = this;
+    
+    @xhr = xhr = `make_xhr()`
+    http = self
 
-      xhr.open(method.toUpperCase(), url, true);
-      xhr.onreadystatechange = function() {
-        #{ `http`.on_state_change };
-      }
-    }
+    if data = options[:data]
+      data = data.to_query_string
 
-    if headers = options[:headers]
-      headers.each do |key, value|
-        begin
-          `xhr.setRequestHeader(key, value)`
-        rescue => e
-          # ...?
-        end
+      if method == :get
+        url  = "#{url}?#{data}"
+        data = nil
       end
     end
 
-    `xhr.send(null)`
+    `xhr.open(#{method.upcase}, #{url}, #{true})`
+    `xhr.onreadystatechange = function() { #{http.on_state_change} }`
+
+    options[:headers].each do |key, value|
+      begin
+        `xhr.setRequestHeader(key, value)`
+      rescue => e
+        # ...?
+      end
+    end
+
+    `xhr.send(#{ data.to_s })`
   end
 
   # Convenience method to parse the body of the response through JSON.
