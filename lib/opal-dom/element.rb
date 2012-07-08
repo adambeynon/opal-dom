@@ -258,6 +258,36 @@ class Element
     `this.el.innerHTML`
   end
 
+  # Updates the html content of this element with the given string of
+  # html. This will remove any existing html content, replacing it with
+  # the given html, finally returning the receiver.
+  #
+  # Assuming the dom structure:
+  #
+  #   ```html
+  #   <div id="foo">Hello world!</div>
+  #   ```
+  #
+  # Simple text content can be replaced:
+  #
+  #   Document['#foo'].html = "Toodle pip"
+  #   Document['#foo'].html
+  #   # => "Toodle pip"
+  #
+  # HTML strings can be set:
+  #
+  #   Document['#foo'].html = '<p class="apples">Hello</p>'
+  #   Document['#foo'].html
+  #   # => '<p class="apples">Hello</p>'
+  #
+  # Multiple child elements can also be set:
+  #
+  #   Document['#foo'].html = "<div>Hello</div><div>Lemons</div>"
+  #   Document['#foo'].html
+  #   # => "<div>Hello</div><div>Lemons</div>"
+  #
+  # @param [String] html string of html to set
+  # @return [Element] returns receiver
   def html=(html)
     %x{
       var el = this.el, tag = el.tagName.toLowerCase();
@@ -277,6 +307,25 @@ class Element
     }
   end
 
+  # Returns the id of this element, or an empty string if it does not
+  # have an id attribute set.
+  #
+  # Given the html:
+  #
+  #   ```html
+  #   <div id="foo"></div>
+  #   <div>Hello</div>
+  #   ```
+  #
+  # The following ruby:
+  #
+  #   Document['#foo'].id
+  #   # => "foo"
+  #
+  #   Document['#foo'].next.id
+  #   # => ""
+  #
+  # @return [String] element id
   def id
     `this.el.id || ''`
   end
@@ -295,9 +344,8 @@ class Element
   #
   # This method will result in:
   #
-  #   ```ruby
-  #   Document['#foo'].inspect    # => '<div id="foo">'
-  #   ```
+  #   Document['#foo'].inspect
+  #   # => '<div id="foo">'
   #
   # @return [String]
   def inspect
@@ -335,9 +383,7 @@ class Element
 
   # Add the given block `handler` as a listener for the event `type`.
   #
-  # @example
-  #
-  #   Element('#foo').on :click do |e|
+  #   Document['#foo'].on :click do |e|
   #     puts "foo was clicked"
   #   end
   #
@@ -383,6 +429,7 @@ class Element
     }
   end
 
+  # Remove an event listener.
   def off(type, &handler)
     # ...
   end
@@ -404,6 +451,46 @@ class Element
     sibling :previousSibling
   end
 
+  # Removes this element from its parent (if it has one) and then
+  # returns self. This does not destroy the element, it simply
+  # detaches it from the dom.
+  #
+  # Given the html:
+  #
+  #   ```html
+  #   <div id="outer">
+  #     <p>Hello</p>
+  #     <p id="foo">Goodbye</p>
+  #     <p>Toodle Pip</p>
+  #   </div>
+  #   ```
+  # 
+  # and the given ruby:
+  # 
+  #   Document['#foo'].remove
+  #
+  # will result in the dom:
+  #
+  #   ```html
+  #   <div id="outer">
+  #     <p>Hello</p>
+  #     <p>Toodle Pip</p>
+  #   </div>
+  #   ```
+  #
+  # @return [Element] returns self
+  def remove
+    %x{
+      var el = this.el, parent = el.parentNode;
+
+      if (parent) {
+        parent.removeChild(el);
+      }
+
+      return this;
+    }
+  end
+
   def remove_class(name)
     %x{
       var el = this.el, className = ' ' + el.className + ' ';
@@ -412,18 +499,6 @@ class Element
       className = className.replace(/^\\s+/, '').replace(/\\s+$/, '');
 
       el.className = className;
-
-      return this;
-    }
-  end
-
-  def remove
-    %x{
-      var el = this.el, parent = el.parentNode;
-
-      if (parent) {
-        parent.removeChild(el);
-      }
 
       return this;
     }
