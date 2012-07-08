@@ -10,8 +10,9 @@ class HTTP
   # @param [String] url url to get
   # @param [Hash] options any options to use
   # @return [HTTP] returns new instance
-  def self.get(url, options={}, &handler)
-    self.new 'GET', url, options, handler
+  def self.get(url, options={}, &action)
+    options[:action] = action if block_given?
+    self.new url, :get, options
   end
 
   # The response body from the request. This will be nil until the
@@ -37,10 +38,17 @@ class HTTP
   # @return [Numeric]
   attr_reader :status
 
-  # Use one of the designated methods insead (HTTP.get(), etc).
-  # @private
-  def initialize(method, url, options, handler)
-    @handler = handler
+  # Returns a new HTTP instance and starts the connection. It is
+  # recomended to use one of the class level methods instead, e.g.
+  # HTTP#get.
+  #
+  #   HTTP.new("api/users/1", :get)
+  #
+  # @param [String] url
+  # @param [String] method
+  # @param [Hash] options
+  def initialize(url, method, options={})
+    @action = options[:action]
     %x{
       var xhr = this.xhr = make_xhr(), http = this;
 
@@ -51,6 +59,18 @@ class HTTP
 
       xhr.send(null);
     }
+  end
+
+  # Convenience method to parse the body of the response through JSON.
+  # An error will be raised if the response is not valid json.
+  #
+  #   HTTP.get("api/users.json") do |res|
+  #     puts res.json
+  #   end
+  #
+  # @return [Hash, Array] json response
+  def json
+    JSON.parse @body
   end
 
   # Returns true if this request succeeded, false otherwise.
@@ -83,7 +103,7 @@ class HTTP
 
     @body = `xhr.responseText || ''`
 
-    @handler.call self
+    @action.call self
   end
 
   # Create a native xhr object

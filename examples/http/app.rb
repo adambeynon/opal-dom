@@ -7,4 +7,11 @@ Document.ready? do
       alert "result: #{res.body}"
     end
   end
+
+  # json result
+  Document['#http-2'].on :click do
+    HTTP.get("files/data.json") do |res|
+      alert "result: #{res.json}"
+    end
+  end
 end

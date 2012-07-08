@@ -45,6 +45,17 @@ HTTP.get("api/users/1") do |res|
 end
 ```
 
+The response can be easily parsed from json using the `json`
+convenience method.
+
+```ruby
+HTTP.get("api/users/1.json") do |res|
+  puts res.json
+end
+
+# => {"name" => "Adam Beynon", "age" => 26, ...}
+```
+
 ## Running specs
 
 Clone repo:
