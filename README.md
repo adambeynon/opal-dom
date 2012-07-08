@@ -56,6 +56,22 @@ end
 # => {"name" => "Adam Beynon", "age" => 26, ...}
 ```
 
+POST requests work the same:
+
+```ruby
+HTTP.post("api/users") do |res|
+  puts res.ok?
+end
+```
+
+Data can be added into the options hash:
+
+```ruby
+HTTP.get("api/find", data: { id: 10}) do |res|
+  # ...
+end
+```
+
 ## Running specs
 
 Clone repo:

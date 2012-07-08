@@ -9,7 +9,7 @@ class HTTP
     }
   }
 
-  # HTTP.get
+  # HTTP.get request.
   #
   #   HTTP.get("api/users/1") do |res|
   #     alert "got result"
@@ -23,6 +23,14 @@ class HTTP
     self.new url, :get, options
   end
 
+  # HTTP.post request.
+  #
+  #   HTTP.post("api/users/2") do |res|
+  #     puts res.json
+  #   end
+  #
+  # @param [String] url the post url
+  # @param [Hash] options
   def self.post(url, options={}, &action)
     options[:action] = action if block_given?
     self.new url, :post, options
