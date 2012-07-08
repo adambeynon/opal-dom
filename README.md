@@ -32,6 +32,19 @@ Document.ready? do
 end
 ```
 
+## HTTP
+
+The `HTTP` class is a wrapper around the native browser 
+`XMLHttpRequest`.
+
+Usage example:
+
+```ruby
+HTTP.get("api/users/1") do |res|
+  alert res.body
+end
+```
+
 ## Running specs
 
 Clone repo:

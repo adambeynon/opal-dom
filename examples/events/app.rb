@@ -1,3 +1,5 @@
+require 'opal-dom'
+
 Document.ready? do
   # Simple event binding test
   count  = 0

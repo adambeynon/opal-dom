@@ -396,7 +396,7 @@ class Element
           events   = data.events || (data.events = {}),
           handlers = events[type];
 
-      if (!handler) {
+      if (!handlers) {
         handlers = events[type] = [];
 
         var listener = function(event) {
