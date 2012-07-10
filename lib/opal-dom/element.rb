@@ -6,6 +6,15 @@
 # element nodes (i.e. text nodes etc will not be returned).
 class Element
 
+  # Wrap a native element
+  def self.wrap(element)
+    %x{
+      element.$m = #{self}.$m_tbl;
+      element.$k = #{self};
+      return element;
+    }
+  end
+
   # Creates a new instance of Element either by tag name, a real dom
   # element or a string of html content to parse. #{self} method will
   # set the priavte `el` property of #{self} instance to the created
@@ -43,7 +52,7 @@ class Element
   #
   # @param [HTMLElement, String] el string or element content
   # @return [Element]
-  def initialize(el = :div)
+  def self.new(el = :div)
     %x{
       if (typeof(el) === 'string') {
         // passing html string?
@@ -67,10 +76,9 @@ class Element
       if (!el || (el.nodeType !== 1)) {
         #{ raise "not a valid Element" }
       }
-
-      #{self}.el = el;
-      return #{self};
     }
+
+    wrap el
   end
 
   # Get a dom attribute by name.
@@ -81,33 +89,33 @@ class Element
   def [](name)
     %x{
       if (name === 'href') {
-        return #{self}.el.getAttribute(name, 2) || '';
+        return #{self}.getAttribute(name, 2) || '';
       }
       else {
-        return #{self}.el.getAttribute(name) || '';
+        return #{self}.getAttribute(name) || '';
       }
     }
   end
 
   def []=(name, value)
-    `#{self}.el.setAttribute(name, value)`
+    `#{self}.setAttribute(name, value)`
   end
 
   def <<(content)
     %x{
       // content is a Element instance
-      if (content.el && content.el.nodeType) {
-        #{self}.el.appendChild(content.el);
+      if (content && content.nodeType) {
+        #{self}.appendChild(content);
         return #{self};
       }
 
       // assume content to be a string
-      var tag   = #{self}.el.tagName.toLowerCase(),
+      var tag   = #{self}.tagName.toLowerCase(),
           nodes = nodes_from_html_string(tag, content);
 
       // add all nodes (including element, text, etc)
       for (var i = 0, length = nodes.length; i < length; i++) {
-        #{self}.el.appendChild(nodes[i]);
+        #{self}.appendChild(nodes[i]);
       }
 
       return #{self};
@@ -118,27 +126,27 @@ class Element
 
   def append_to_body
     %x{
-      document.body.appendChild(#{self}.el);
+      document.body.appendChild(#{self});
       return #{self};
     }
   end
 
   def append_to_head
     %x{
-      document.getElementsByTagName('head')[0].appendChild(#{self}.el);
+      document.getElementsByTagName('head')[0].appendChild(#{self});
       return #{self};
     }
   end
 
   def add_class(name)
     %x{
-      var el = #{self}.el, className = el.className;
+      var className = #{self}.className;
 
       if (!className) {
-        el.className = name;
+        #{self}.className = name;
       }
       else if((' ' + className + ' ').indexOf(' ' + name + ' ') === -1) {
-        el.className += (' ' + name);
+        #{self}.className += (' ' + name);
       }
 
       return #{self};
@@ -158,7 +166,7 @@ class Element
       var result = [], set = Sizzle(selector);
 
       for (var i = 0, length = set.length; i < length; i++) {
-        result.push(#{ Element.new `set[i]` });
+        result.push(#{ Element.wrap `set[i]` });
       }
 
       return result;
@@ -166,12 +174,12 @@ class Element
   end
 
   def class_name
-    `#{self}.el.className || ''`
+    `#{self}.className || ''`
   end
 
   def class_name=(name)
     %x{
-      #{self}.el.className = name;
+      #{self}.className = name;
       return #{self};
     }
   end
@@ -179,10 +187,10 @@ class Element
   def css(name, value = undefined)
     %x{
       if (value == null) {
-        return #{self}.el.style[name];
+        return #{self}.style[name];
       }
 
-      return #{self}.el.style[name] = value;
+      return #{self}.style[name] = value;
     }
   end
 
@@ -194,10 +202,8 @@ class Element
   # @return self
   def clear
     %x{
-      var el = #{self}.el;
-
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
+      while (#{self}.firstChild) {
+        #{self}.removeChild(#{self}.firstChild);
       }
 
       return #{self};
@@ -214,10 +220,10 @@ class Element
   # @return [Element, nil] matching element or nil
   def find(selector)
     %x{
-      var res = Sizzle(selector, #{self}.el);
+      var res = Sizzle(selector, #{self});
 
       if (res.length) {
-        return #{ Element.new `res[0]` }
+        return #{ Element.wrap `res[0]` }
       }
 
       return nil;
@@ -233,9 +239,7 @@ class Element
   # @return [true, false]
   def has_class?(name)
     %x{
-      var el = #{self}.el;
-
-      if ((' ' + el.className + ' ').indexOf(' ' + name + ' ') !== -1) {
+      if ((' ' + #{self}.className + ' ').indexOf(' ' + name + ' ') !== -1) {
         return true;
       }
 
@@ -249,13 +253,13 @@ class Element
   # @return [Element] returns receiver
   def hide
     %x{
-      #{self}.el.style.display = 'none';
+      #{self}.style.display = 'none';
       return #{self};
     }
   end
 
   def html
-    `#{self}.el.innerHTML`
+    `#{self}.innerHTML`
   end
 
   # Updates the html content of #{self} element with the given string of
@@ -290,14 +294,14 @@ class Element
   # @return [Element] returns receiver
   def html=(html)
     %x{
-      var el = #{self}.el, tag = el.tagName.toLowerCase();
+      var tag = #{self}.tagName.toLowerCase();
 
       // cleanup event listeners etc from all children
-      cleanup_element_children(el);
+      cleanup_element_children(#{self});
 
       // well behaved browsers
       if (supports_inner_html) {
-        el.innerHTML = html;
+        #{self}.innerHTML = html;
       }
       else {
         #{ raise "innerHTML broken, workaround." };
@@ -327,7 +331,7 @@ class Element
   #
   # @return [String] element id
   def id
-    `#{self}.el.id || ''`
+    `#{self}.id || ''`
   end
 
   # Returns string version of #{self} element. The returned string will
@@ -350,13 +354,12 @@ class Element
   # @return [String]
   def inspect
     %x{
-      var el, str, result = [];
+      var str, result = [];
 
-      el  = #{self}.el;
-      str = "<" + el.tagName.toLowerCase();
+      str = "<" + #{self}.tagName.toLowerCase();
 
-      if (val = el.id) str += (' id="' + val + '"');
-      if (val = el.className) str += (' class="' + val + '"');
+      if (val = #{self}.id) str += (' id="' + val + '"');
+      if (val = #{self}.className) str += (' class="' + val + '"');
 
       return str + '>';
     }
@@ -391,8 +394,7 @@ class Element
   # @return [Proc] returns the handlder
   def on(type, &handler)
     %x{
-      var el       = #{self}.el, 
-          data     = storage_for(el),
+      var data     = storage_for(#{self}),
           events   = data.events || (data.events = {}),
           handlers = events[type];
 
@@ -415,11 +417,11 @@ class Element
           }
         };
 
-        if (el.addEventListener) {
-          el.addEventListener(type, listener, false);
+        if (#{self}.addEventListener) {
+          #{self}.addEventListener(type, listener, false);
         }
         else {
-          el.attachEvent('on' + type, listener);
+          #{self}.attachEvent('on' + type, listener);
         }
       }
 
@@ -481,10 +483,10 @@ class Element
   # @return [Element] returns self
   def remove
     %x{
-      var el = #{self}.el, parent = el.parentNode;
+      var parent = #{self}.parentNode;
 
       if (parent) {
-        parent.removeChild(el);
+        parent.removeChild(#{self});
       }
 
       return #{self};
@@ -493,12 +495,12 @@ class Element
 
   def remove_class(name)
     %x{
-      var el = #{self}.el, className = ' ' + el.className + ' ';
+      var className = ' ' + #{self}.className + ' ';
 
       className = className.replace(' ' + name + ' ', ' ');
       className = className.replace(/^\\s+/, '').replace(/\\s+$/, '');
 
-      el.className = className;
+      #{self}.className = className;
 
       return #{self};
     }
@@ -511,7 +513,7 @@ class Element
   # @return [Element] returns receiver
   def show
     %x{
-      #{self}.el.style.display = '';
+      #{self}.style.display = '';
       return #{self};
     }
   end
@@ -519,7 +521,7 @@ class Element
   # @param [String] type should be native type (e.g. 'nextSibling')
   def sibling(type, selector = undefined)
     %x{
-      var el = #{self}.el;
+      var el = #{self};
 
       while (el = el[type]) {
         if (el.nodeType !== 1) {
@@ -527,7 +529,7 @@ class Element
         }
 
         if (!selector || Sizzle.matchesSelector(el, selector)) {
-          return #{ Element.new `el` }
+          return #{ Element.wrap `el` }
         }
       }
 
@@ -540,16 +542,16 @@ class Element
   # Returns the tagname of #{self} element
   # @return [String]
   def tag
-    `#{self}.el.tagName.toLowerCase()`
+    `#{self}.tagName.toLowerCase()`
   end
 
   def text
-    `Sizzle.getText(#{self}.el)`
+    `Sizzle.getText(#{self})`
   end
 
   def text=(str)
     self.clear
-    `#{self}.el.appendChild(document.createTextNode(str))`
+    `#{self}.appendChild(document.createTextNode(str))`
     self
   end
 
@@ -579,7 +581,7 @@ class Element
   # @return [Element, nil]
   def up(selector = undefined)
     %x{
-      var el = #{self}.el;
+      var el = #{self};
 
       if (selector == null) {
         if (el = el.parentNode) {
@@ -595,7 +597,7 @@ class Element
         }
 
         if (Sizzle.matchesSelector(el, selector)) {
-          return #{ Element.new `el` };
+          return #{ Element.wrap `el` };
         }
       }
 
@@ -604,7 +606,7 @@ class Element
   end
 
   def value
-    `#{self}.el.value`
+    `#{self}.value`
   end
 
   # Returns true if #{self} element is visible, false otherwise. #{self}
@@ -614,7 +616,7 @@ class Element
   #
   # @return [true, false]
   def visible?
-    `#{self}.el.style.display !== 'none'`
+    `#{self}.style.display !== 'none'`
   end
 
   # JS HELPERS
