@@ -49,7 +49,7 @@ module Document
   #
   # @return [self] returns Document module
   def self.ready?(&block)
-    `setTimeout(function() { block.call(block._s); }, 0)`
+    `setTimeout(function() { #{ block.call }; }, 0)`
     self
   end
 

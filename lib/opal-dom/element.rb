@@ -7,23 +7,23 @@
 class Element
 
   # Creates a new instance of Element either by tag name, a real dom
-  # element or a string of html content to parse. This method will
-  # set the priavte `el` property of this instance to the created
+  # element or a string of html content to parse. #{self} method will
+  # set the priavte `el` property of #{self} instance to the created
   # element.
   #
   # ## By tag name
   #
   # If no argument is given, or the given string is a tag name, then
   # a new element will be created internally and will be set as the
-  # context of this element instance.
+  # context of #{self} element instance.
   #
   #   Element.new       # => <div>
   #   Element.new 'p'   # => <p>
   #
   # ## With a real native element
   #
-  # You can pass a real native dom element into this constructor which
-  # will simply make that element the context of this Element instance.
+  # You can pass a real native dom element into #{self} constructor which
+  # will simply make that element the context of #{self} Element instance.
   #
   #   Element.new(`document.getElementById('foo')`) # => <div id="foo">
   #
@@ -31,7 +31,7 @@ class Element
   #
   # Passing a string of html content will result in the first element
   # being parsed from the string content and becoming the context of
-  # this instance.
+  # #{self} instance.
   #
   #   Element.new('<div id="bar"></div>')   # => <div id="bar">
   #
@@ -68,8 +68,8 @@ class Element
         #{ raise "not a valid Element" }
       }
 
-      this.el = el;
-      return this;
+      #{self}.el = el;
+      return #{self};
     }
   end
 
@@ -81,36 +81,36 @@ class Element
   def [](name)
     %x{
       if (name === 'href') {
-        return this.el.getAttribute(name, 2) || '';
+        return #{self}.el.getAttribute(name, 2) || '';
       }
       else {
-        return this.el.getAttribute(name) || '';
+        return #{self}.el.getAttribute(name) || '';
       }
     }
   end
 
   def []=(name, value)
-    `this.el.setAttribute(name, value)`
+    `#{self}.el.setAttribute(name, value)`
   end
 
   def <<(content)
     %x{
       // content is a Element instance
       if (content.el && content.el.nodeType) {
-        this.el.appendChild(content.el);
-        return this;
+        #{self}.el.appendChild(content.el);
+        return #{self};
       }
 
       // assume content to be a string
-      var tag   = this.el.tagName.toLowerCase(),
+      var tag   = #{self}.el.tagName.toLowerCase(),
           nodes = nodes_from_html_string(tag, content);
 
       // add all nodes (including element, text, etc)
       for (var i = 0, length = nodes.length; i < length; i++) {
-        this.el.appendChild(nodes[i]);
+        #{self}.el.appendChild(nodes[i]);
       }
 
-      return this;
+      return #{self};
     }
   end
 
@@ -118,21 +118,21 @@ class Element
 
   def append_to_body
     %x{
-      document.body.appendChild(this.el);
-      return this;
+      document.body.appendChild(#{self}.el);
+      return #{self};
     }
   end
 
   def append_to_head
     %x{
-      document.getElementsByTagName('head')[0].appendChild(this.el);
-      return this;
+      document.getElementsByTagName('head')[0].appendChild(#{self}.el);
+      return #{self};
     }
   end
 
   def add_class(name)
     %x{
-      var el = this.el, className = el.className;
+      var el = #{self}.el, className = el.className;
 
       if (!className) {
         el.className = name;
@@ -141,12 +141,12 @@ class Element
         el.className += (' ' + name);
       }
 
-      return this;
+      return #{self};
     }
   end
 
-  # Find all elements within the scope of this element that match
-  # the given selector. This method will always return an array which
+  # Find all elements within the scope of #{self} element that match
+  # the given selector. #{self} method will always return an array which
   # will contain 0 or more matching elements.
   #
   #   elem.all('.foo')    # => []
@@ -166,46 +166,46 @@ class Element
   end
 
   def class_name
-    `this.el.className || ''`
+    `#{self}.el.className || ''`
   end
 
   def class_name=(name)
     %x{
-      this.el.className = name;
-      return this;
+      #{self}.el.className = name;
+      return #{self};
     }
   end
 
   def css(name, value = undefined)
     %x{
       if (value == null) {
-        return this.el.style[name];
+        return #{self}.el.style[name];
       }
 
-      return this.el.style[name] = value;
+      return #{self}.el.style[name] = value;
     }
   end
 
-  # Remove all child nodes from this element, and return the receiver.
-  # This will remove text nodes as well as real elements.
+  # Remove all child nodes from #{self} element, and return the receiver.
+  # #{self} will remove text nodes as well as real elements.
   #
   #   Document['#foo'].clear
   #
   # @return self
   def clear
     %x{
-      var el = this.el;
+      var el = #{self}.el;
 
       while (el.firstChild) {
         el.removeChild(el.firstChild);
       }
 
-      return this;
+      return #{self};
     }
   end
 
   # Finds the first element matching the given selector that is within
-  # the scope of this element. If no matching element is found, then
+  # the scope of #{self} element. If no matching element is found, then
   # `nil` is returned.
   #
   #   elem.find('.bar')     # => element or nil
@@ -214,7 +214,7 @@ class Element
   # @return [Element, nil] matching element or nil
   def find(selector)
     %x{
-      var res = Sizzle(selector, this.el);
+      var res = Sizzle(selector, #{self}.el);
 
       if (res.length) {
         return #{ Element.new `res[0]` }
@@ -224,7 +224,7 @@ class Element
     }
   end
 
-  # Returns true if this element has a css class matching the given
+  # Returns true if #{self} element has a css class matching the given
   # name, false otherwise.
   #
   #   elem.has_class? 'foo'     # => true or false
@@ -233,7 +233,7 @@ class Element
   # @return [true, false]
   def has_class?(name)
     %x{
-      var el = this.el;
+      var el = #{self}.el;
 
       if ((' ' + el.className + ' ').indexOf(' ' + name + ' ') !== -1) {
         return true;
@@ -243,23 +243,23 @@ class Element
     }
   end
 
-  # Hides this element by setting the 'display' style property to
+  # Hides #{self} element by setting the 'display' style property to
   # 'none'.
   #
   # @return [Element] returns receiver
   def hide
     %x{
-      this.el.style.display = 'none';
-      return this;
+      #{self}.el.style.display = 'none';
+      return #{self};
     }
   end
 
   def html
-    `this.el.innerHTML`
+    `#{self}.el.innerHTML`
   end
 
-  # Updates the html content of this element with the given string of
-  # html. This will remove any existing html content, replacing it with
+  # Updates the html content of #{self} element with the given string of
+  # html. #{self} will remove any existing html content, replacing it with
   # the given html, finally returning the receiver.
   #
   # Assuming the dom structure:
@@ -290,7 +290,7 @@ class Element
   # @return [Element] returns receiver
   def html=(html)
     %x{
-      var el = this.el, tag = el.tagName.toLowerCase();
+      var el = #{self}.el, tag = el.tagName.toLowerCase();
 
       // cleanup event listeners etc from all children
       cleanup_element_children(el);
@@ -303,11 +303,11 @@ class Element
         #{ raise "innerHTML broken, workaround." };
       }
 
-      return this;
+      return #{self};
     }
   end
 
-  # Returns the id of this element, or an empty string if it does not
+  # Returns the id of #{self} element, or an empty string if it does not
   # have an id attribute set.
   #
   # Given the html:
@@ -327,10 +327,10 @@ class Element
   #
   # @return [String] element id
   def id
-    `this.el.id || ''`
+    `#{self}.el.id || ''`
   end
 
-  # Returns string version of this element. The returned string will
+  # Returns string version of #{self} element. The returned string will
   # list the tag name for all elements, as well as an id and class
   # name if set on the receiver.
   #
@@ -342,7 +342,7 @@ class Element
   #   <div class="foo"></div>
   #   ```
   #
-  # This method will result in:
+  # #{self} method will result in:
   #
   #   Document['#foo'].inspect
   #   # => '<div id="foo">'
@@ -352,7 +352,7 @@ class Element
     %x{
       var el, str, result = [];
 
-      el  = this.el;
+      el  = #{self}.el;
       str = "<" + el.tagName.toLowerCase();
 
       if (val = el.id) str += (' id="' + val + '"');
@@ -362,7 +362,7 @@ class Element
     }
   end
 
-  # Returns the next sibling of this Element. Text nodes are ignored,
+  # Returns the next sibling of #{self} Element. Text nodes are ignored,
   # and if there is no next Element then `nil` is returned.
   #
   #   elem.next     # => Element instance
@@ -391,7 +391,7 @@ class Element
   # @return [Proc] returns the handlder
   def on(type, &handler)
     %x{
-      var el       = this.el, 
+      var el       = #{self}.el, 
           data     = storage_for(el),
           events   = data.events || (data.events = {}),
           handlers = events[type];
@@ -438,7 +438,7 @@ class Element
     sibling :parentNode
   end
 
-  # Returns the previous sibling of this Element. Text nodes are
+  # Returns the previous sibling of #{self} Element. Text nodes are
   # ignored, and if no Element is found then `nil` is returned.
   #
   # @example
@@ -451,8 +451,8 @@ class Element
     sibling :previousSibling
   end
 
-  # Removes this element from its parent (if it has one) and then
-  # returns self. This does not destroy the element, it simply
+  # Removes #{self} element from its parent (if it has one) and then
+  # returns self. #{self} does not destroy the element, it simply
   # detaches it from the dom.
   #
   # Given the html:
@@ -481,45 +481,45 @@ class Element
   # @return [Element] returns self
   def remove
     %x{
-      var el = this.el, parent = el.parentNode;
+      var el = #{self}.el, parent = el.parentNode;
 
       if (parent) {
         parent.removeChild(el);
       }
 
-      return this;
+      return #{self};
     }
   end
 
   def remove_class(name)
     %x{
-      var el = this.el, className = ' ' + el.className + ' ';
+      var el = #{self}.el, className = ' ' + el.className + ' ';
 
       className = className.replace(' ' + name + ' ', ' ');
       className = className.replace(/^\\s+/, '').replace(/\\s+$/, '');
 
       el.className = className;
 
-      return this;
+      return #{self};
     }
   end
 
   # Removes any inline 'display' property that is being used to hide
-  # this element. This will not affect any elements hidden by a css
+  # #{self} element. #{self} will not affect any elements hidden by a css
   # rule by their class name/id.
   #
   # @return [Element] returns receiver
   def show
     %x{
-      this.el.style.display = '';
-      return this;
+      #{self}.el.style.display = '';
+      return #{self};
     }
   end
 
   # @param [String] type should be native type (e.g. 'nextSibling')
   def sibling(type, selector = undefined)
     %x{
-      var el = this.el;
+      var el = #{self}.el;
 
       while (el = el[type]) {
         if (el.nodeType !== 1) {
@@ -537,25 +537,25 @@ class Element
 
   alias succ next
 
-  # Returns the tagname of this element
+  # Returns the tagname of #{self} element
   # @return [String]
   def tag
-    `this.el.tagName.toLowerCase()`
+    `#{self}.el.tagName.toLowerCase()`
   end
 
   def text
-    `Sizzle.getText(this.el)`
+    `Sizzle.getText(#{self}.el)`
   end
 
   def text=(str)
     self.clear
-    `this.el.appendChild(document.createTextNode(str))`
+    `#{self}.el.appendChild(document.createTextNode(str))`
     self
   end
 
   alias to_s inspect
 
-  # If this element is currently visible, then this will hide the
+  # If #{self} element is currently visible, then #{self} will hide the
   # elements, otherwise as the element is hidden it will become
   # visible.
   #
@@ -564,7 +564,7 @@ class Element
     visible? ? hide : show
   end
 
-  # Returns this elements' parent if it exists.
+  # Returns #{self} elements' parent if it exists.
   #
   #   Document['#foo'].up     # => element
   #
@@ -579,7 +579,7 @@ class Element
   # @return [Element, nil]
   def up(selector = undefined)
     %x{
-      var el = this.el;
+      var el = #{self}.el;
 
       if (selector == null) {
         if (el = el.parentNode) {
@@ -604,17 +604,17 @@ class Element
   end
 
   def value
-    `this.el.value`
+    `#{self}.el.value`
   end
 
-  # Returns true if this element is visible, false otherwise. This
+  # Returns true if #{self} element is visible, false otherwise. #{self}
   # relies on the element's display style attribute. Setting the
-  # display with a css class will not make this method work as
+  # display with a css class will not make #{self} method work as
   # expected.
   #
   # @return [true, false]
   def visible?
-    `this.el.style.display !== 'none'`
+    `#{self}.el.style.display !== 'none'`
   end
 
   # JS HELPERS
@@ -640,7 +640,7 @@ class Element
     }
   }
 
-  # Detect if innerHTML is buggy (internet explorer). This info is used
+  # Detect if innerHTML is buggy (internet explorer). #{self} info is used
   # when creating elements from strings, and updating the contents of
   # elements.
   %x{
@@ -682,7 +682,7 @@ class Element
     }
   }
 
-  # Remove all children of element and cleanup their events. This will
+  # Remove all children of element and cleanup their events. #{self} will
   # leave the actual passed element alone
   %x{
     function cleanup_element_children(elem) {
